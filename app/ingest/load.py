@@ -1,6 +1,5 @@
 """Load local demo PDFs into the advisor database."""
 import argparse
-import re
 from datetime import date
 from hashlib import sha256
 from pathlib import Path
@@ -53,10 +52,13 @@ def load_directory(directory):
                 db.flush()
             previous = db.exec(select(func.max(SDSVersion.version_no)).where(
                 SDSVersion.product_id == product.id)).one() or 0
-            # Demo replacement sheets carry an explicit revision suffix.
-            explicit = re.search(r"-rev(\d+)\.pdf$", filename, re.I)
-            number = max(previous + 1, int(explicit[1]) if explicit else 1)
-            status = "pending" if previous or number > 1 else "active"
+            number = previous + 1
+            active = db.exec(select(SDSVersion).where(
+                SDSVersion.product_id == product.id, SDSVersion.status == "active")).first()
+            status = "pending" if previous else "active"
+            message = "pending: needs user confirmation" if previous else "active"
+            if active and active.revision_date and revision <= active.revision_date:
+                message = "older or same revision date: needs user confirmation"
             version = SDSVersion(product_id=product.id, version_no=number,
                                  revision_date=revision, file_hash=digest, status=status,
                                  uploaded_by="demo")
@@ -65,7 +67,6 @@ def load_directory(directory):
             for row in rows:
                 row.version_id = version.id
             db.add_all(rows)
-        message = "pending: needs user confirmation" if status == "pending" else "active"
         print(f"{filename}: {message}")
 
 

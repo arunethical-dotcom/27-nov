@@ -30,14 +30,18 @@ def load_directory(directory):
                 continue
         rows = list(chunks(page_texts(path), 0))
         metadata = extract_metadata(rows)
-        def field(key):
-            values = {v.value for v in metadata[key]}
-            if len(values) != 1:
-                raise ValueError(f"{path.name}: missing or ambiguous {key}")
-            return values.pop()
-        pending.append((field("product_code"), date.fromisoformat(field("revision_date")),
-                        path.name, digest, field("product_name"),
-                        sorted({v.value for v in metadata["cas_numbers"]}), rows))
+        fields = {}
+        for key in ("product_code", "revision_date", "product_name"):
+            candidates = metadata[key]
+            values = {item.value for item in candidates}
+            if len(values) != 1 or any(item.ambiguous for item in candidates):
+                print(f"{path.name}: needs manual metadata (missing {key})")
+                break
+            fields[key] = values.pop()
+        else:
+            pending.append((fields["product_code"], date.fromisoformat(fields["revision_date"]),
+                            path.name, digest, fields["product_name"],
+                            sorted({v.value for v in metadata["cas_numbers"]}), rows))
 
     for code, revision, filename, digest, name, cas, rows in sorted(pending):
         with Session(engine) as db, db.begin():

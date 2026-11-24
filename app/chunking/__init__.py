@@ -1,5 +1,9 @@
 """Page-local character spans in unmodified PyMuPDF text."""
+from pathlib import Path
+from functools import lru_cache
 import re
+
+from tokenizers import Tokenizer
 
 from app.db import Chunk
 
@@ -41,7 +45,21 @@ def content_spans(pages):
             yield page_number, start, page[start:cursor]
 
 
-def chunks(pages, version_id):
+WINDOW_SIZE = 200
+WINDOW_OVERLAP = 40
+
+
+@lru_cache(maxsize=1)
+def embedding_tokenizer():
+    tokenizer = Tokenizer.from_file(str(Path(__file__).with_name("tokenizer.json")))
+    tokenizer.no_truncation()
+    tokenizer.no_padding()
+    return tokenizer
+
+
+def chunks(pages, version_id, *, window_size=WINDOW_SIZE, window_overlap=WINDOW_OVERLAP):
+    if not 0 <= window_overlap < window_size <= 200:
+        raise ValueError("Expected 0 <= overlap < size <= 200")
     section = "0"
     for page, origin, source in content_spans(pages):
         headings = list(HEADING.finditer(source))
@@ -68,11 +86,11 @@ def chunks(pages, version_id):
                              text=body[left:right])
 
             yield chunk("section", 0, len(body))
-            tokens = list(re.finditer(r"\S+", body))
-            for j in range(0, len(tokens), 320):
-                last = min(j + 400, len(tokens))
-                yield chunk("window", tokens[j].start(), tokens[last - 1].end())
-                if last == len(tokens):
+            offsets = embedding_tokenizer().encode(body, add_special_tokens=False).offsets
+            for j in range(0, len(offsets), window_size - window_overlap):
+                last = min(j + window_size, len(offsets))
+                yield chunk("window", offsets[j][0], offsets[last - 1][1])
+                if last == len(offsets):
                     break
             if section.split(".")[0] in {"2", "6", "7", "8", "10"}:
                 for match in SENTENCE.finditer(body):

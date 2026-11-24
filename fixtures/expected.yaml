@@ -1,0 +1,14 @@
+step_1:
+  Aster 100 + Boreal 200: {verdict: CONFLICT, rule: R1}
+  Aster 100 + Cirrus 300: {verdict: UNRESOLVED, rule: R4}
+  Boreal 200 + Cirrus 300: {verdict: UNRESOLVED, rule: R4}
+step_2:
+  Dahlia 400 + Ember 500: {verdict: CONFLICT, rule: R2, evidence: [strong oxidising agents, H272]}
+  Ember 500 + Fern 600: {verdict: UNRESOLVED, rule: R4, with_r3: CONFLICT}
+  other_new_pairs_allowed: [UNRESOLVED, NO_CONFLICT_FOUND]
+step_3:
+  revision_date: '2026-11-20'
+  Aster 100 + Cirrus 300: {before: UNRESOLVED, after: CONFLICT, change_flag: STATUS_CHANGED}
+  Aster 100 + Boreal 200: {before: CONFLICT, after: CONFLICT, change_flag: EVIDENCE_CHANGED}
+  other_aster_pairs: NONE
+  allow_self_pairs: false

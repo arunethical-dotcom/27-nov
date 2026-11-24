@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+jinja2
+sqlmodel
+pydantic>=2
+pytest
+httpx
+PyMuPDF
+PyYAML

@@ -28,15 +28,21 @@ PAGE_NUMBER = re.compile(r"(?:Page\s+\d+\s+of\s+\d+|\d+\s*/\s*\d+)", re.I)
 
 
 def content_spans(pages):
-    repeated = set()
-    if len(pages) > 1:
-        repeated = set.intersection(*(set(line.strip() for line in page.splitlines()) for page in pages))
-    for page_number, page in enumerate(pages, 1):
+    zones = []
+    labels = []
+    for page in pages:
+        lines = page.splitlines(keepends=True)
+        nonempty = [i for i, line in enumerate(lines) if line.strip()]
+        zone = set(nonempty[:3] + nonempty[-3:])
+        zones.append(zone)
+        labels.append({lines[i].strip() for i in zone})
+    repeated = set.intersection(*labels) if len(labels) > 1 else set()
+    for page_number, (page, zone) in enumerate(zip(pages, zones), 1):
         start = cursor = 0
-        for line in page.splitlines(keepends=True):
+        for index, line in enumerate(page.splitlines(keepends=True)):
             label = line.strip()
-            if label and (label in repeated or PAGE_NUMBER.fullmatch(label)
-                          or label == "Software evaluation fixture"):
+            if index in zone and (label in repeated or PAGE_NUMBER.fullmatch(label)
+                                  or label == "Software evaluation fixture"):
                 if cursor > start:
                     yield page_number, start, page[start:cursor]
                 start = cursor + len(line)

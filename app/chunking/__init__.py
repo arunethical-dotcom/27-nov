@@ -21,7 +21,7 @@ SENTENCE = re.compile(
 
 
 def chunks(pages, version_id):
-    section = None
+    section = "0"
     for page, source in enumerate(pages, 1):
         headings = list(HEADING.finditer(source))
         boundaries = [(0, section)]

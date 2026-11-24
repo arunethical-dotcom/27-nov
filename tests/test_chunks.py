@@ -9,7 +9,7 @@ from app.ingest import page_texts
 def test_fixture_offsets(path):
     pages = page_texts(path)
     rows = list(chunks(pages, 1))
-    assert {row.section.split(".")[0] for row in rows} == set(map(str, range(1, 17)))
+    assert {row.section.split(".")[0] for row in rows} == set(map(str, range(0, 17)))
     assert {row.method for row in rows} == {"section", "window", "sentence"}
     for row in rows:
         assert pages[row.page - 1][row.start:row.end] == row.text

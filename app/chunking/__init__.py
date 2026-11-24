@@ -23,10 +23,23 @@ MEASUREMENT_UNIT = re.compile(
     r"[ \t]*(?:[fpnumµμkMc]?g|[cmkµμn]?m|m?mol|[mµμ]?l|ppm|ppb|pa|kpa|bar|°[cf])"
     r"(?=\s|/|$)", re.I,
 )
-SENTENCE = re.compile(
-    r"\S.*?(?:[.!?](?=\s|$)|(?=\n[ \t]*(?:\n|[-*•]\s|\d+[.)]\s))|(?=\s*\Z))",
-    re.DOTALL,
-)
+ABBREVIATION = re.compile(r"\b(?:e\.g|i\.e|etc|approx|incl|no|max|min|ca)\.$", re.I)
+SENTENCE_BREAK = re.compile(r"[.!?](?=\s|$)|\n(?=[ \t]*(?:\n|[-*•]\s|\d+[.)]\s))")
+
+
+def sentence_spans(body):
+    start = 0
+    for boundary in SENTENCE_BREAK.finditer(body):
+        end = boundary.end()
+        if boundary[0] == "." and ABBREVIATION.search(body, max(0, end - 8), end):
+            continue
+        segment = body[start:end]
+        if segment.strip():
+            yield start + len(segment) - len(segment.lstrip()), start + len(segment.rstrip())
+        start = end
+    tail = body[start:]
+    if tail.strip():
+        yield start + len(tail) - len(tail.lstrip()), start + len(tail.rstrip())
 
 
 PAGE_NUMBER = re.compile(r"(?:Page\s+\d+\s+of\s+\d+|\d+\s*/\s*\d+)", re.I)
@@ -116,5 +129,5 @@ def chunks(pages, version_id, *, window_size=WINDOW_SIZE, window_overlap=WINDOW_
                 if last == len(offsets):
                     break
             if section.split(".")[0] in {"2", "6", "7", "8", "10"}:
-                for match in SENTENCE.finditer(body):
-                    yield chunk("sentence", *match.span())
+                for left, right in sentence_spans(body):
+                    yield chunk("sentence", left, right)

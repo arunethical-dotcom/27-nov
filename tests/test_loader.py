@@ -34,12 +34,26 @@ def test_cli_loads_seven_versions_and_skips_duplicate_hashes(tmp_path):
         assert [(r.id, r.version_id) for r in db.exec(select(Chunk)).all()] == before
 
 
-def test_revision_alone_requires_confirmation(tmp_path):
-    import shutil
-    root = Path(__file__).resolve().parents[1]
-    shutil.copy(root / "fixtures" / "SDS-Aster-100-rev2.pdf", tmp_path)
-    subprocess.run([sys.executable, "-m", "app.ingest.load", "."], cwd=tmp_path,
-                   env=dict(os.environ, PYTHONPATH=str(root)), check=True)
+def test_database_order_and_older_or_same_date(tmp_path, monkeypatch, capsys):
+    import pymupdf
+    from app.ingest.load import load_directory
+
+    monkeypatch.chdir(tmp_path)
+    inbox = tmp_path / "incoming"
+    inbox.mkdir()
+    uploads = [("supplier-rev99.pdf", "2026-11-20", "active"),
+               ("new-delivery.pdf", "2026-11-01", "older or same revision date: needs user confirmation"),
+               ("same-date.pdf", "2026-11-20", "older or same revision date: needs user confirmation"),
+               ("another.pdf", "2026-11-21", "pending: needs user confirmation")]
+    for filename, revision, message in uploads:
+        with pymupdf.open() as pdf:
+            page = pdf.new_page()
+            page.insert_text((40, 55), f"Revision date: {revision}\nSECTION 1: Identification\n"
+                                       f"Product name: Aster 100\nProduct code: ASTER-100\n{filename}")
+            pdf.save(inbox / filename)
+        load_directory(inbox)
+        assert f"{filename}: {message}" in capsys.readouterr().out.splitlines()
     with Session(create_engine("sqlite:///" + str(tmp_path / "advisor.db"))) as db:
-        version = db.exec(select(SDSVersion)).one()
-        assert (version.version_no, version.status) == (2, "pending")
+        versions = db.exec(select(SDSVersion).order_by(SDSVersion.id)).all()
+        assert [(v.version_no, v.status) for v in versions] == [
+            (1, "active"), (2, "pending"), (3, "pending"), (4, "pending")]

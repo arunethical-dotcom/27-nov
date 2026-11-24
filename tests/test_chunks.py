@@ -17,7 +17,19 @@ def test_fixture_offsets(path):
 
 
 def test_window_overlap():
-    page = "SECTION 7: Storage\n" + " ".join(map(str, range(830)))
+    from app.chunking import embedding_tokenizer
+
+    page = "SECTION 7: Storage\n" + " ".join(["hydroxyethyl-cellulose"] * 125)
     windows = [r for r in chunks([page], 1) if r.method == "window"]
-    assert len(windows) == 3
-    assert windows[0].text.split()[-80:] == windows[1].text.split()[:80]
+    tokens = embedding_tokenizer().encode(page, add_special_tokens=False).offsets
+    expected = []
+    for i in range(0, len(tokens), 160):
+        end = min(i + 200, len(tokens))
+        expected.append((tokens[i][0], tokens[end - 1][1]))
+        if end == len(tokens):
+            break
+    assert len(expected) > 3
+    assert [(r.start, r.end) for r in windows] == expected
+    short = [r for r in chunks([page], 1, window_size=12, window_overlap=3)
+             if r.method == "window"]
+    assert (short[0].end, short[1].start) == (tokens[11][1], tokens[9][0])

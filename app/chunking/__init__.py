@@ -20,9 +20,30 @@ SENTENCE = re.compile(
 )
 
 
+PAGE_NUMBER = re.compile(r"(?:Page\s+\d+\s+of\s+\d+|\d+\s*/\s*\d+)", re.I)
+
+
+def content_spans(pages):
+    repeated = set()
+    if len(pages) > 1:
+        repeated = set.intersection(*(set(line.strip() for line in page.splitlines()) for page in pages))
+    for page_number, page in enumerate(pages, 1):
+        start = cursor = 0
+        for line in page.splitlines(keepends=True):
+            label = line.strip()
+            if label and (label in repeated or PAGE_NUMBER.fullmatch(label)
+                          or label == "Software evaluation fixture"):
+                if cursor > start:
+                    yield page_number, start, page[start:cursor]
+                start = cursor + len(line)
+            cursor += len(line)
+        if cursor > start:
+            yield page_number, start, page[start:cursor]
+
+
 def chunks(pages, version_id):
     section = "0"
-    for page, source in enumerate(pages, 1):
+    for page, origin, source in content_spans(pages):
         headings = list(HEADING.finditer(source))
         boundaries = [(0, section)]
         top = section.split(".")[0] if section else None
@@ -43,7 +64,7 @@ def chunks(pages, version_id):
 
             def chunk(method, left, right):
                 return Chunk(version_id=version_id, method=method, section=section,
-                             page=page, start=start + left, end=start + right,
+                             page=page, start=origin + start + left, end=origin + start + right,
                              text=body[left:right])
 
             yield chunk("section", 0, len(body))

@@ -3,7 +3,7 @@ import re
 
 from app.db import Chunk
 
-HEADING = re.compile(r"(?im)^[ \t]*(?:SECTION[ \t]+(1[0-6]|[1-9])\s*[:.]|(\d{1,2}\.\d+)\b)")
+HEADING = re.compile(r"(?im)^[ \t]*(?:SECTION[ \t]+(1[0-6]|[1-9])\s*[:.]|((?:1[0-6]|[1-9])\.\d+)(?=[ \t]+[^\W\d_]))")
 SENTENCE = re.compile(
     r"\S.*?(?:[.!?](?=\s|$)|(?=\n[ \t]*(?:\n|[-*•]\s|\d+[.)]\s))|(?=\s*\Z))",
     re.DOTALL,
@@ -15,7 +15,13 @@ def chunks(pages, version_id):
     for page, source in enumerate(pages, 1):
         headings = list(HEADING.finditer(source))
         boundaries = [(0, section)]
-        boundaries.extend((m.start(), m.group(1) or m.group(2)) for m in headings)
+        top = section.split(".")[0] if section else None
+        for match in headings:
+            if match.group(1):
+                top = match.group(1)
+                boundaries.append((match.start(), top))
+            elif match.group(2).split(".")[0] == top:
+                boundaries.append((match.start(), match.group(2)))
         for i, (start, section) in enumerate(boundaries):
             end = boundaries[i + 1][0] if i + 1 < len(boundaries) else len(source)
             body = source[start:end]

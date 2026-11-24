@@ -3,7 +3,17 @@ import re
 
 from app.db import Chunk
 
-HEADING = re.compile(r"(?im)^[ \t]*(?:SECTION[ \t]+(1[0-6]|[1-9])\s*[:.]|((?:1[0-6]|[1-9])\.\d+)(?=[ \t]+[^\W\d_]))")
+TITLE_WORDS = (
+    "identification", "hazard", "composition", "first", "fire", "accidental",
+    "handling", "exposure", "physical", "stability", "toxicological",
+    "ecological", "disposal", "transport", "regulatory", "other",
+)
+HEADING = re.compile(
+    r"^[ \t]*(?:SECTION[ \t]+(?P<label>1[0-6]|[1-9])(?=[ \t:.-]|$)"
+    r"|(?P<number>1[0-6]|[1-9])\.?[ \t]+(?P<title>[A-Za-z]+)"
+    r"|(?P<sub>(?:1[0-6]|[1-9])\.\d+)(?=[ \t]+[^\W\d_]))",
+    re.MULTILINE | re.IGNORECASE,
+)
 SENTENCE = re.compile(
     r"\S.*?(?:[.!?](?=\s|$)|(?=\n[ \t]*(?:\n|[-*•]\s|\d+[.)]\s))|(?=\s*\Z))",
     re.DOTALL,
@@ -17,11 +27,14 @@ def chunks(pages, version_id):
         boundaries = [(0, section)]
         top = section.split(".")[0] if section else None
         for match in headings:
-            if match.group(1):
-                top = match.group(1)
+            number = match["label"] or match["number"]
+            if number:
+                if match["title"] and not match["title"].lower().startswith(TITLE_WORDS[int(number) - 1]):
+                    continue
+                top = number
                 boundaries.append((match.start(), top))
-            elif match.group(2).split(".")[0] == top:
-                boundaries.append((match.start(), match.group(2)))
+            elif match["sub"].split(".")[0] == top:
+                boundaries.append((match.start(), match["sub"]))
         for i, (start, section) in enumerate(boundaries):
             end = boundaries[i + 1][0] if i + 1 < len(boundaries) else len(source)
             body = source[start:end]

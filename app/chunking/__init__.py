@@ -3,6 +3,7 @@ from pathlib import Path
 from functools import lru_cache
 import re
 
+import yaml
 from tokenizers import Tokenizer
 
 from app.db import Chunk
@@ -27,7 +28,11 @@ SENTENCE = re.compile(
 PAGE_NUMBER = re.compile(r"(?:Page\s+\d+\s+of\s+\d+|\d+\s*/\s*\d+)", re.I)
 
 
-def content_spans(pages):
+FURNITURE_CONFIG = Path(__file__).with_name("furniture.yaml")
+
+
+def content_spans(pages, config):
+    configured = set(yaml.safe_load(Path(config).read_text(encoding="utf-8"))["furniture"])
     zones = []
     labels = []
     for page in pages:
@@ -42,7 +47,7 @@ def content_spans(pages):
         for index, line in enumerate(page.splitlines(keepends=True)):
             label = line.strip()
             if index in zone and (label in repeated or PAGE_NUMBER.fullmatch(label)
-                                  or label == "Software evaluation fixture"):
+                                  or label in configured):
                 if cursor > start:
                     yield page_number, start, page[start:cursor]
                 start = cursor + len(line)
@@ -63,11 +68,12 @@ def embedding_tokenizer():
     return tokenizer
 
 
-def chunks(pages, version_id, *, window_size=WINDOW_SIZE, window_overlap=WINDOW_OVERLAP):
+def chunks(pages, version_id, *, window_size=WINDOW_SIZE, window_overlap=WINDOW_OVERLAP,
+           furniture_config=FURNITURE_CONFIG):
     if not 0 <= window_overlap < window_size <= 200:
         raise ValueError("Expected 0 <= overlap < size <= 200")
     section = "0"
-    for page, origin, source in content_spans(pages):
+    for page, origin, source in content_spans(pages, furniture_config):
         headings = list(HEADING.finditer(source))
         boundaries = [(0, section)]
         top = section.split(".")[0] if section else None

@@ -19,6 +19,10 @@ HEADING = re.compile(
     r"|(?P<sub>(?:1[0-6]|[1-9])\.\d+)(?=[ \t]+[^\W\d_]))",
     re.MULTILINE | re.IGNORECASE,
 )
+MEASUREMENT_UNIT = re.compile(
+    r"[ \t]*(?:[fpnumµμkMc]?g|[cmkµμn]?m|m?mol|[mµμ]?l|ppm|ppb|pa|kpa|bar|°[cf])"
+    r"(?=\s|/|$)", re.I,
+)
 SENTENCE = re.compile(
     r"\S.*?(?:[.!?](?=\s|$)|(?=\n[ \t]*(?:\n|[-*•]\s|\d+[.)]\s))|(?=\s*\Z))",
     re.DOTALL,
@@ -73,6 +77,7 @@ def chunks(pages, version_id, *, window_size=WINDOW_SIZE, window_overlap=WINDOW_
     if not 0 <= window_overlap < window_size <= 200:
         raise ValueError("Expected 0 <= overlap < size <= 200")
     section = "0"
+    last_subsection = {}
     for page, origin, source in content_spans(pages, furniture_config):
         headings = list(HEADING.finditer(source))
         boundaries = [(0, section)]
@@ -85,6 +90,10 @@ def chunks(pages, version_id, *, window_size=WINDOW_SIZE, window_overlap=WINDOW_
                 top = number
                 boundaries.append((match.start(), top))
             elif match["sub"].split(".")[0] == top:
+                sub = int(match["sub"].split(".")[1])
+                if sub <= last_subsection.get(top, -1) or MEASUREMENT_UNIT.match(source, match.end()):
+                    continue
+                last_subsection[top] = sub
                 boundaries.append((match.start(), match["sub"]))
         for i, (start, section) in enumerate(boundaries):
             end = boundaries[i + 1][0] if i + 1 < len(boundaries) else len(source)

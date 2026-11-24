@@ -1,0 +1,154 @@
+# CAT1-037 · SDS Chemical Compatibility Advisor
+
+Decision support only. Confirm with a qualified person.
+
+## What you can run today
+
+Phases 0 and 1 provide a local FastAPI home page, a SQLite schema, a PDF import command and three ways to split SDS text while preserving its source. The CLI is the entry point for loading PDFs. The home page displays the project name and disclaimer. Storage verdicts, cited PPE and emergency cards, review screens and JSON downloads belong to later phases.
+
+## Set up and reproduce the demo
+
+Use a Linux CPU machine with Python 3.11. The dependency freeze was produced with Python 3.11.18. Run these commands from the repository root in Bash. Installation needs access to the pinned packages or a pre-populated wheelhouse. After installation, extraction and chunking run locally with the bundled tokenizer.
+
+```sh
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m pytest -q
+python -m app.ingest.load fixtures/
+python -m app.ingest.load fixtures/
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+Visit http://localhost:8000. Both entry points open advisor.db relative to the working directory. On a fresh database, the first import writes seven versions belonging to six products. The second prints seven duplicate messages. To reproduce a fresh import without deleting prior work, use a fresh checkout and run from its root.
+
+## Where the implementation lives
+
+| Path | Responsibility |
+|---|---|
+| app/main.py and app/ui/index.html | App startup, database initialization, HTTP exception response and home page |
+| app/db.py | SQLModel tables, foreign keys, unique indexes and check constraints |
+| app/ingest/__init__.py | PyMuPDF text extraction and the helper that writes version chunks before fact review |
+| app/ingest/load.py | Directory import, hash checks, product lookup and transactional version writes |
+| app/ingest/metadata.py | Identification fields, normalized dates, CAS validation and raw evidence spans |
+| app/chunking/__init__.py | Page zones, section recognition and chunk generation |
+| app/chunking/furniture.yaml | Configured page-edge labels, including the fictional fixture footer |
+| app/chunking/tokenizer.json and tokenizer-LICENSE.txt in the same directory | Bundled all-MiniLM-L6-v2 tokenizer and its license |
+| fixtures/ | Seven fictional PDFs and expected.yaml, the acceptance contract for future verdicts |
+| tests/ and .github/workflows/tests.yml | Regression suite and permanent CI workflow |
+
+## How an import works
+
+1. The CLI enumerates *.pdf files in the specified directory and computes each file’s SHA-256. A hash already stored in sds_version produces a duplicate message.
+2. PyMuPDF extracts each page as text. The chunker retains offsets into this original string. The extractor reads identification data from section chunks in the header and Section 1, including its subsections.
+3. A file needs one distinct product code, name and interpretable revision date. Identical repeated values are accepted. Missing, conflicting or flagged required fields produce `<file>: needs manual metadata (missing <field>)`. The loader skips that file and continues. This recovery covers metadata problems; a corrupt or unreadable PDF can still interrupt extraction.
+4. The loader sorts eligible files by product code and revision date before writing a batch. For each file it takes a SQLite write lock with BEGIN IMMEDIATE, rechecks the hash, looks up the product by code and writes the version and its chunks together. The demo uploader is recorded as demo.
+5. A first version becomes active. Later files receive the next database version number for that product and enter pending status. A filename suffix has no effect. A newer revision prints `pending: needs user confirmation`. An equal or earlier date compared with the active revision prints `older or same revision date: needs user confirmation`. A pending import leaves the active version in place.
+
+### Identification and provenance
+
+| Field | Accepted input and behavior |
+|---|---|
+| Product name | Product name, Product identifier or Trade name |
+| Product code | Product code |
+| Revision date | Revision date, Date of revision or Revised |
+| Date values | YYYY-MM-DD, DD/MM/YYYY, DD.MM.YYYY or a full English month, e.g. 11 March 2026 |
+| CAS numbers | Optional. Each candidate must pass the weighted CAS check-digit calculation |
+
+Labels are case-insensitive and colon-delimited. An unambiguous date is normalized to ISO. For example, 23/03/2026 becomes 2026-03-23. The extractor retains 03/11/2026 as raw text and flags it for review because it admits two interpretations. An unparseable date also requires review. A CAS checksum verifies the digits only.
+
+Each extracted occurrence carries value, raw, ambiguous, chunk_id, start and end. Use raw when comparing a normalized value with a PDF passage. Call extract_metadata on persisted section chunks to get database chunk IDs. The loader stores the product and version fields and the underlying chunks; the extraction result is not a separate metadata table.
+
+### Chunk and offset contract
+
+Pages are one-based. Character offsets are zero-based and half-open, measured within one original PyMuPDF page. The invariant is `pages[chunk.page - 1][chunk.start:chunk.end] == chunk.text`. A wrapped sentence retains its original newline. Removing an intervening footer splits a contiguous span so that the text on either side still has valid offsets.
+
+- **Furniture.** A page zone is the first three or last three non-empty lines. With multiple pages, a label must occur in a zone on every page to count as repeated furniture. Only occurrences in a zone are removed. Page numbers such as Page 1 of 2 or 1 / 2 and configured furniture labels also qualify in that zone. Mid-page occurrences survive. Repeated substantive text in the edge zones can still satisfy this positional heuristic.
+- **Sections.** Section 0 holds the preamble. Top-level section numbers run from 1 to 16 and must increase. Recognized styles include SECTION 7: Handling, SECTION 7 - Handling, Section 7 Handling, 7. HANDLING AND STORAGE and 7 Handling and storage. Bare numbers require a recognized title prefix. Titled N.M headings must belong to the current top-level section and advance its last accepted subsection number. Measurement lines such as 8.5 mg per m3 remain body text.
+- **Section chunks.** Each chunk covers one continuous portion of a section or subsection on a single page. Page breaks and furniture can yield multiple chunks with the same section label.
+- **Window chunks.** The local MiniLM tokenizer supplies character spans for content tokens, excluding special tokens. Defaults are 200 tokens with 40 overlapping. The chunking API accepts window_size and window_overlap with 0 ≤ overlap < size ≤ 200.
+- **Sentence chunks.** Generated for Sections 2, 6, 7, 8 and 10 and their subsections. Headings, blank lines, bullets and sentence-ending punctuation can create boundaries. Ordinary line wraps, decimal points and common abbreviations such as e.g., i.e., approx., incl., max. and min. stay inside the span.
+
+## SQLite records and safeguards
+
+| Table | Role |
+|---|---|
+| product | Unique code, display name, synonyms and CAS numbers |
+| sds_version | Product, per-product version number, revision date, unique file hash, status and upload audit fields |
+| chunk | Version, method, section, page, character range and exact text |
+| fact | Version, extracted fact type and value, source chunk and human confirmation fields |
+| session and session_product | Named sessions and their product membership |
+| pair_result | Session, ordered version pair, verdict, rule, evidence, verification gaps and timestamp |
+| change_report | Old and new versions, field and pair changes, confirming user and time |
+
+The web app and CLI enable SQLite foreign-key enforcement. A partial unique index permits at most one active version per product. Product/version-number combinations and hashes have uniqueness constraints. Pair results require a_version_id < b_version_id and a unique ordered pair per session. The future pairing layer must also exclude two different versions of the same product. The current CLI populates products, versions and chunks.
+
+## Planned advisory behavior and remaining phase gates
+
+Every advisory claim must cite the active SDS text. Search finds passages, a human confirms facts and deterministic rules determine the verdict. Optional language-model assistance is off by default and cannot decide a verdict. The planned validator checks whitespace-normalized quotes against their chunk offsets and abstains when required evidence fails.
+
+| Phase | Deliverable and acceptance gate |
+|---|---|
+| 2 · Retrieval | Bidirectional name, synonym, code, CAS, class and H-code queries. BM25 and MiniLM vectors merge by reciprocal rank fusion (k=60); a cross-encoder reranks the top 20. Report Recall@5 and MRR by method and retriever. |
+| 3 · Advisory | Confirm facts and produce validated advisory JSON, PPE from Section 8 and emergency guidance from Sections 4–6. Pass demo Steps 1 and 2 with cited evidence. |
+| 4 · Sessions | Save the exact versions used for each pair. Adding a seventh product to a session of six creates six new results. |
+| 5 · Revisions | Preview pending revisions, show side-by-side changed fields and affected pairs, and ask before replacement. Record status changes and evidence-only changes. Pass demo Step 3 and reject a tampered quote. |
+| 6 · Clean demo | Run the full demo from an empty database and publish the evaluation report and Fedora instructions. |
+
+Storage retrieval targets Sections 7 and 10, with Sections 2, 9 and 14 available for class evidence. A single-product check uses its own sheet. A multi-product check also searches each pair in both directions. The planned verdict order is R1 named restriction, R2 class restriction with evidence from both sheets, optional R3 cited reactive-group rule, R4 unresolved evidence gaps, then R5 complete evidence with no conflict found. R4 distinguishes SDS_SAYS_NO_DATA from NOT_LOCATED. The R5 display text is “No conflict found in these SDS sections”. Planned evaluation includes conflict recall, zero dangerous misses on fixtures, unresolved accuracy, 100% citation validity and revision-flag agreement.
+
+The unchanged fixture contract expects Aster/Boreal to trigger R1, and Aster/Cirrus and Boreal/Cirrus to trigger R4. Adding Dahlia, Ember and Fern must produce the Dahlia/Ember R2 conflict; Ember/Fern stays unresolved with R3 disabled. Aster rev2 must change Aster/Cirrus to CONFLICT and flag Aster/Boreal for changed evidence. These are future rule-engine acceptance cases. The seven sheets alone do not establish a complete R5 evaluation example.
+
+The project scope excludes OCR, multilingual SDSs, concentration rules, label photos, cabinet layouts, separation distances and regulatory compliance claims.
+
+## Tests, demo inventory and review history
+
+CI installs requirements.txt and runs python -m pytest -q on Ubuntu with Python 3.11. The workflow enables push, pull_request and workflow_dispatch, caches pip and the Hugging Face directory, and declares read-only contents permission. The following results identify the implementation commits tested during review. Fixture counts are from a clean import, and chunk IDs can vary across databases.
+
+## Second Phase 1 review
+
+All eight regression tests or test groups failed on GitHub before their corresponding fixes. Final CI reported **74 passed in 2.77s**. Local verification reported **74 passed in 3.22s**. Each of the seven fixtures still produces 19 section, 19 window and 8 sentence chunks. The fixture expectations match main.
+
+| Review item | Regression | Fix |
+|---|---|---|
+| Preserve mid-page evidence | [Fail](https://github.com/arunethical-dotcom/27-nov/actions/runs/45481405913) | [Pass](https://github.com/arunethical-dotcom/27-nov/actions/runs/45481694336) |
+| Configure edge furniture | [Fail](https://github.com/arunethical-dotcom/27-nov/actions/runs/45481908056) | [Pass](https://github.com/arunethical-dotcom/27-nov/actions/runs/45482139157) |
+| Increasing subsection numbers | [Fail](https://github.com/arunethical-dotcom/27-nov/actions/runs/45482347629) | [Pass](https://github.com/arunethical-dotcom/27-nov/actions/runs/45482522694) |
+| Increasing section numbers | [Fail](https://github.com/arunethical-dotcom/27-nov/actions/runs/45482743367) | [Pass](https://github.com/arunethical-dotcom/27-nov/actions/runs/45482917362) |
+| Abbreviation and decimal handling | [Fail](https://github.com/arunethical-dotcom/27-nov/actions/runs/45483071655) | [Pass](https://github.com/arunethical-dotcom/27-nov/actions/runs/45483287543) |
+| DB version sequence and revision dates | [Fail](https://github.com/arunethical-dotcom/27-nov/actions/runs/45483521232) | [Pass](https://github.com/arunethical-dotcom/27-nov/actions/runs/45483685047) |
+| Cited metadata formats and CAS checks | [Fail](https://github.com/arunethical-dotcom/27-nov/actions/runs/45483895136) | [Pass](https://github.com/arunethical-dotcom/27-nov/actions/runs/45484068840) |
+| Continue batch after manual-metadata skips | [Fail](https://github.com/arunethical-dotcom/27-nov/actions/runs/45484229253) | [Pass](https://github.com/arunethical-dotcom/27-nov/actions/runs/45484445478) |
+
+## First Phase 1 review
+
+### Initial verification
+
+Baseline run #1 reported `9 passed, 1 warning in 0.95s`. The final run of the first review reported **34 passed in 2.35s** on Python 3.11. All eight review items were completed. The existing one-active-version index, pair ordering check, foreign-key pragma, and original-page offset assertion are retained. The expected.yaml blob matches main.
+
+| Review item | Test commit | Fix commit |
+|---|---|---|
+| 1. Preserve wrap and offsets | [Failed](https://github.com/arunethical-dotcom/27-nov/actions/runs/45476645624) | [Passed](https://github.com/arunethical-dotcom/27-nov/actions/runs/45476883484) |
+| 2. Reject numeric measurements as headings | [Failed](https://github.com/arunethical-dotcom/27-nov/actions/runs/45477080640) | [Passed](https://github.com/arunethical-dotcom/27-nov/actions/runs/45477457713) |
+| 3. Recognize four heading formats | [Failed](https://github.com/arunethical-dotcom/27-nov/actions/runs/45477597722) | [Passed](https://github.com/arunethical-dotcom/27-nov/actions/runs/45477754380) |
+| 4. Extract header and identification metadata | [Failed](https://github.com/arunethical-dotcom/27-nov/actions/runs/45477894268) | [Passed](https://github.com/arunethical-dotcom/27-nov/actions/runs/45478613008) |
+| 5. Exclude repeated furniture and pagination | [Failed](https://github.com/arunethical-dotcom/27-nov/actions/runs/45478717620) | [Passed](https://github.com/arunethical-dotcom/27-nov/actions/runs/45478859880) |
+| 6. Use configurable MiniLM token windows | [Failed](https://github.com/arunethical-dotcom/27-nov/actions/runs/45478999268) | [Passed](https://github.com/arunethical-dotcom/27-nov/actions/runs/45479262146) |
+| 7. Load demo PDFs and stage revisions | [Failed](https://github.com/arunethical-dotcom/27-nov/actions/runs/45479456006) | [Passed](https://github.com/arunethical-dotcom/27-nov/actions/runs/45479599564) |
+| 8. Pin dependencies and document Python | [Failed](https://github.com/arunethical-dotcom/27-nov/actions/runs/45479743474) | [Passed](https://github.com/arunethical-dotcom/27-nov/actions/runs/45479921625) |
+
+## Fixture results
+
+A clean CLI import produced six products, seven versions and 322 chunks. All dates, names and codes below came from header or identification chunks. A dash means no CAS number was found there. Metadata records carry the chunk ID and original page offsets. Reloading skipped all seven hashes.
+
+| Product | Code | Revision | Status | CAS numbers | Section | Window | Sentence |
+|---|---|---|---|---|---:|---:|---:|
+| Aster 100 v1 | ASTER-100 | 2026-11-01 | Active | — | 19 | 19 | 8 |
+| Aster 100 rev2 | ASTER-100 | 2026-11-20 | Pending | — | 19 | 19 | 8 |
+| Boreal 200 | BOREAL-200 | 2026-11-01 | Active | — | 19 | 19 | 8 |
+| Cirrus 300 | CIRRUS-300 | 2026-11-01 | Active | — | 19 | 19 | 8 |
+| Dahlia 400 | DAHLIA-400 | 2026-11-01 | Active | — | 19 | 19 | 8 |
+| Ember 500 | EMBER-500 | 2026-11-01 | Active | — | 19 | 19 | 8 |
+| Fern 600 | FERN-600 | 2026-11-01 | Active | — | 19 | 19 | 8 |
+
+The window counts include the Section 0 header. Aster rev2 requires user confirmation. This PR ends at Phase 1.

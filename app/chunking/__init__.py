@@ -85,6 +85,8 @@ def chunks(pages, version_id, *, window_size=WINDOW_SIZE, window_overlap=WINDOW_
         for match in headings:
             number = match["label"] or match["number"]
             if number:
+                if int(number) <= int(top):
+                    continue
                 if match["title"] and not match["title"].lower().startswith(TITLE_WORDS[int(number) - 1]):
                     continue
                 top = number

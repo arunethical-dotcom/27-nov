@@ -4,7 +4,10 @@ import re
 from app.db import Chunk
 
 HEADING = re.compile(r"(?im)^[ \t]*(?:SECTION[ \t]+(1[0-6]|[1-9])\s*[:.]|(\d{1,2}\.\d+)\b)")
-SENTENCE = re.compile(r"\S.*?(?:[.!?](?=\s|$)|(?=\n|$))")
+SENTENCE = re.compile(
+    r"\S.*?(?:[.!?](?=\s|$)|(?=\n[ \t]*(?:\n|[-*•]\s|\d+[.)]\s))|(?=\s*\Z))",
+    re.DOTALL,
+)
 
 
 def chunks(pages, version_id):

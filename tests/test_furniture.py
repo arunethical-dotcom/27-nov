@@ -12,11 +12,12 @@ def test_section_16_excludes_footer(path):
 
 
 def test_furniture_cuts_preserve_page_offsets():
+    from app.chunking import document_text
     pages = ["SECTION 7: Handling\nFirst line.\nBanner\nKeep dry.\nPage 1 of 2\n",
              "Other storage notes.\nBanner\nClose lid.\n2 / 2\n"]
     rows = list(chunks(pages, 1))
     assert {r.method for r in rows} == {"section", "window", "sentence"}
     for row in rows:
-        assert row.text == pages[row.page-1][row.start:row.end]
+        assert row.text == document_text(pages)[row.start:row.end]
         assert not any(x in row.text for x in ("Banner", "Page 1 of 2", "2 / 2"))
     assert any("Close lid." in r.text for r in rows)

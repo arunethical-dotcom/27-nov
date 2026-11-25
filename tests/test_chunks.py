@@ -7,12 +7,13 @@ from app.ingest import page_texts
 
 @pytest.mark.parametrize("path", sorted(Path("fixtures").glob("*.pdf")), ids=lambda p:p.stem)
 def test_fixture_offsets(path):
+    from app.chunking import document_text
     pages = page_texts(path)
     rows = list(chunks(pages, 1))
     assert {row.section.split(".")[0] for row in rows} == set(map(str, range(0, 17)))
     assert {row.method for row in rows} == {"section", "window", "sentence"}
     for row in rows:
-        assert pages[row.page - 1][row.start:row.end] == row.text
+        assert document_text(pages)[row.start:row.end] == row.text
     assert any(row.section == "10.5" for row in rows)
 
 

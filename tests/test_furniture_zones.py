@@ -2,6 +2,7 @@ from app.chunking import chunks
 
 
 def test_repeated_storage_evidence_survives_midpage():
+    from app.chunking import document_text
     pages = [
         "Banner\nFirst page\nSECTION 10: Stability\n10.5 Incompatible materials:\n"
         "No data available.\n1 / 2\nAdditional details\nEnd of notes\nPage 1 of 2\n",
@@ -13,6 +14,6 @@ def test_repeated_storage_evidence_survives_midpage():
         evidence = [r for r in rows if r.page == number and r.section == "10.5"
                     and "No data available." in r.text]
         assert len(evidence) == 1
-        assert page[evidence[0].start:evidence[0].end] == evidence[0].text
+        assert document_text(pages)[evidence[0].start:evidence[0].end] == evidence[0].text
     assert all("Banner" not in r.text and "Page " not in r.text for r in rows)
     assert any("1 / 2" in r.text for r in rows)

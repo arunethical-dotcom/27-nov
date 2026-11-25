@@ -9,6 +9,7 @@ from app.ingest import ingest_version, page_texts
 
 @pytest.mark.parametrize("path", sorted(Path("fixtures").glob("*.pdf")), ids=lambda p:p.stem)
 def test_fixture_metadata(path):
+    from app.chunking import document_text
     from app.ingest.metadata import extract_metadata
 
     pages = page_texts(path)
@@ -27,7 +28,7 @@ def test_fixture_metadata(path):
             for value in values:
                 chunk = next(r for r in rows if r.id == value.chunk_id)
                 assert chunk.start <= value.start < value.end <= chunk.end
-                assert pages[chunk.page-1][value.start:value.end] == value.value
+                assert document_text(pages)[value.start:value.end] == value.raw
 
 
 def test_multiple_cas_in_identification_only():

@@ -1,5 +1,5 @@
 # SDS Chemical Compatibility Advisor
-CAT1-037 is a local SDS review application. The current milestone implements PDF ingestion and chunking.
+CAT1-037 is a local SDS review application. The current milestone includes ingestion, retrieval, fact confirmation and deterministic advisory checks.
 
 ## Run locally
 The dependencies in requirements.txt were frozen from a clean Python 3.11.18 virtual environment. CI uses Python 3.11 on Ubuntu.
@@ -55,3 +55,38 @@ passages in its top five; reciprocal rank is the inverse rank of its first
 relevant chunk (zero on a miss). Both metrics are averaged over 26 labelled
 directions. Unlabelled reverse directions still run. Results characterize these
 fictional fixtures only.
+
+## Phase 3 · Review and advise
+
+The retrieval scores above were measured on six one-page fictional sheets, with
+roughly ten in-scope chunks per sheet. They demonstrate that the pipeline runs.
+Real-world retrieval accuracy requires independent labelled SDSs.
+
+For the fictional demo, run:
+```sh
+python -m app.ingest.load fixtures/ --confirm-demo
+python -m app.advise ASTER-100 BOREAL-200 CIRRUS-300
+python -m app.advise DAHLIA-400 EMBER-500
+```
+For manual review, omit the flag, open the home page, select the active version,
+inspect its proposals and storage passages, and submit a reviewer name. Clients
+can POST {"user":"Reviewer"} to /versions/{id}/facts/confirm. Confirmation applies
+to the active version. The demo flag is intended only for fictional inputs.
+Extraction uses regexes. Each fact records its chunk, document offsets and verbatim
+quote. Active source validation also checks the enclosing chunk. Missing PPE or
+emergency instructions are represented by their cited no-data sentence when
+available, otherwise an empty evidence list. Product IDs, active SDS version IDs
+and chunk IDs are database keys. The session UUID identifies one advisory call.
+
+All confirmed facts in Sections 2, 7, 10 and 14 participate before ranking.
+BM25 orders optional evidence and chemical-card passages without a model download.
+R1 validates a named restriction. R2 requires both supporting citations. R3
+defaults off in rules/class_map.yaml. R4 reports explicit no-data or verification
+gaps. R5 is conservative: it requires confirmed class evidence and fully interpreted storage restrictions or explicit clear
+statements in both Section 7 and 10.5 of each sheet. Section titles alone
+cannot establish completeness. H290 and “corrosive to metals” describe metal
+corrosivity; the strong-acid mapping also requires explicit identity evidence.
+All examples are decision support only. Confirm with a qualified person.
+
+Full CLI examples from the demo database: eval/examples/step_1.json and
+eval/examples/dahlia_ember.json. Later imports can assign different database IDs.

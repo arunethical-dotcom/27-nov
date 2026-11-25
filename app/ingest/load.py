@@ -25,7 +25,7 @@ def upgrade_legacy_offsets(db, version, pages):
     version.document_text = document_text(pages)
 
 
-def load_directory(directory):
+def load_directory(directory, confirm_demo=False):
     engine = create_engine("sqlite:///advisor.db")
 
     @event.listens_for(engine, "connect")
@@ -33,9 +33,11 @@ def load_directory(directory):
         connection.execute("PRAGMA foreign_keys=ON")
 
     initialize_database(engine)
+    imported_hashes = set()
     pending = []
     for path in sorted(directory.glob("*.pdf")):
         digest = sha256(path.read_bytes()).hexdigest()
+        imported_hashes.add(digest)
         with Session(engine) as db, db.begin():
             db.execute(text("BEGIN IMMEDIATE"))
             existing = db.exec(select(SDSVersion).where(SDSVersion.file_hash == digest)).first()
@@ -90,11 +92,22 @@ def load_directory(directory):
             db.add_all(rows)
         print(f"{filename}: {message}")
 
+    from app.facts import confirm, extract
+    with Session(engine) as db, db.begin():
+        db.execute(text("BEGIN IMMEDIATE"))
+        for version in db.exec(select(SDSVersion).where(SDSVersion.status == "active")):
+            # Re-extract after catalog changes, so aliases of newly added products resolve.
+            if confirm_demo and version.file_hash in imported_hashes:
+                confirm(db, version, "demo")
+            else:
+                extract(db, version)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("directory", type=Path)
+    parser.add_argument("--confirm-demo", action="store_true")
     args = parser.parse_args()
     if not args.directory.is_dir():
         parser.error("Expected a directory of PDF files")
-    load_directory(args.directory)
+    load_directory(args.directory, args.confirm_demo)

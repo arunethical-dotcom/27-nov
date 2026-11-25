@@ -1,0 +1,137 @@
+{
+  "session_id": "55945946-f832-487d-93fe-8f1c00c44d9c",
+  "chemicals": [
+    {
+      "product_id": 4,
+      "sds_version": 5,
+      "ppe": [
+        {
+          "chunk_id": 205,
+          "section": "8",
+          "quote": "No data available.",
+          "page": 1
+        }
+      ],
+      "emergency": {
+        "4": [
+          {
+            "chunk_id": 195,
+            "section": "4",
+            "quote": "No data available.",
+            "page": 1
+          }
+        ],
+        "5": [
+          {
+            "chunk_id": 197,
+            "section": "5",
+            "quote": "No data available.",
+            "page": 1
+          }
+        ],
+        "6": [
+          {
+            "chunk_id": 199,
+            "section": "6",
+            "quote": "No data available.",
+            "page": 1
+          }
+        ]
+      },
+      "storage_notes": [
+        {
+          "chunk_id": 202,
+          "section": "7",
+          "quote": "Keep away from strong oxidising agents.",
+          "page": 1
+        },
+        {
+          "chunk_id": 216,
+          "section": "10.5",
+          "quote": "Strong oxidising agents.",
+          "page": 1
+        }
+      ]
+    },
+    {
+      "product_id": 5,
+      "sds_version": 6,
+      "ppe": [
+        {
+          "chunk_id": 251,
+          "section": "8",
+          "quote": "No data available.",
+          "page": 1
+        }
+      ],
+      "emergency": {
+        "4": [
+          {
+            "chunk_id": 241,
+            "section": "4",
+            "quote": "No data available.",
+            "page": 1
+          }
+        ],
+        "5": [
+          {
+            "chunk_id": 243,
+            "section": "5",
+            "quote": "No data available.",
+            "page": 1
+          }
+        ],
+        "6": [
+          {
+            "chunk_id": 245,
+            "section": "6",
+            "quote": "No data available.",
+            "page": 1
+          }
+        ]
+      },
+      "storage_notes": [
+        {
+          "chunk_id": 248,
+          "section": "7",
+          "quote": "Storage compatibility data unavailable.",
+          "page": 1
+        },
+        {
+          "chunk_id": 262,
+          "section": "10.5",
+          "quote": "No data available.",
+          "page": 1
+        }
+      ]
+    }
+  ],
+  "pairs": [
+    {
+      "a": 4,
+      "b": 5,
+      "verdict": "CONFLICT",
+      "rule_id": "R2",
+      "evidence": [
+        {
+          "chunk_id": 202,
+          "section": "7",
+          "quote": "Keep away from strong oxidising agents.",
+          "page": 1,
+          "side": "A"
+        },
+        {
+          "chunk_id": 235,
+          "section": "2",
+          "quote": "H272 May intensify fire; oxidiser.",
+          "page": 1,
+          "side": "B"
+        }
+      ],
+      "to_verify": [],
+      "change_flag": "NONE"
+    }
+  ],
+  "abstained": false,
+  "disclaimer": "Decision support only. Confirm with a qualified person."
+}

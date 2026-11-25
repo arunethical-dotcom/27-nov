@@ -30,6 +30,8 @@ class SDSVersion(SQLModel, table=True):
     file_hash: str = Field(unique=True)
     status: str = "pending"
     document_text: str | None = None
+    reviewed_storage: list = Field(default_factory=list, sa_column=Column(JSON))
+    reviewer: str | None = None
     uploaded_by: str
     uploaded_at: datetime = Field(default_factory=now)
 
@@ -60,6 +62,9 @@ class Fact(SQLModel, table=True):
     type: str
     value: str
     chunk_id: int = Field(foreign_key="chunk.id")
+    start: int | None = None
+    end: int | None = None
+    quote: str | None = None
     confirmed_by: str | None = None
     confirmed_at: datetime | None = None
 
@@ -110,7 +115,8 @@ def initialize_database(engine):
     with engine.begin() as conn:
         conn.exec_driver_sql("BEGIN IMMEDIATE")
         SQLModel.metadata.create_all(conn)
-        for table, fields in {"sds_version": {"document_text": "TEXT"},
+        for table, fields in {"sds_version": {"document_text": "TEXT", "reviewed_storage": "JSON", "reviewer": "TEXT"},
+                              "fact": {"start": "INTEGER", "end": "INTEGER", "quote": "TEXT"},
                               "chunk": {"page_start": "INTEGER", "page_end": "INTEGER"}}.items():
             existing = {row[1] for row in conn.exec_driver_sql(f"PRAGMA table_info({table})")}
             for name, kind in fields.items():

@@ -1,0 +1,10 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>SDS fact review</title>
+<main><h1>Review {{ product.name }} · version {{ version.version_no }}</h1>
+<p>{{ disclaimer }}</p>
+<table><caption>Extracted proposals and source passages</caption>
+<thead><tr><th>Section / page</th><th>Type</th><th>Passage</th><th>Reviewer</th></tr></thead>
+<tbody>{% for fact, chunk in rows %}<tr><td>{{ chunk.section }} / {{ chunk.page }}</td><td>{{ fact.type }}</td><td>{{ fact.quote }}</td><td>{{ fact.confirmed_by or "Awaiting review" }}</td></tr>{% endfor %}</tbody></table>
+<h2>Storage passages included in this review</h2>
+{% for note in notes %}<p>{{ note }}</p>{% endfor %}
+<form method="post" action="/versions/{{ version.id }}/facts/confirm"><label>Your name <input name="user" required maxlength="120"></label><button>Confirm all reviewed facts</button></form>
+</main></html>

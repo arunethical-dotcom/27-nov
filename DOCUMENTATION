@@ -175,3 +175,7 @@ The following CPU results use the six active demo sheets (276 chunks).
 | sentence | vector | 0.942 | 0.670 | 26 |
 | sentence | hybrid | 0.923 | 0.933 | 26 |
 | sentence | reranked | 0.949 | 0.939 | 26 |
+
+## Phase 3 update
+
+See README.md for the review page, confirmation endpoint, CLI and rule coverage. The two complete example advisories are in eval/examples/. Results from the six fictional retrieval fixtures demonstrate pipeline operation only.

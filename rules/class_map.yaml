@@ -1,0 +1,27 @@
+version: 1
+classes:
+  oxidising_agents:
+    restrictions: [strong oxidising agents, strong oxidizing agents, oxidising agents, oxidizing agents, oxidisers, oxidizers]
+    codes: [H270, H271, H272]
+    classes: [oxidising, oxidizing, oxidiser, oxidizer]
+    source: &ghs https://unece.org/fileadmin/DAM/trans/danger/publi/ghs/ghs_rev03/English/07e_annex3.pdf
+  flammable:
+    restrictions: [flammable, flammables]
+    codes: [H220, H221, H222, H223, H224, H225, H226, H227, H228]
+    classes: [flammable]
+    source: *ghs
+  strong_acids:
+    restrictions: [strong acids, strong acid]
+    codes: [H290]
+    classes: [corrosive to metals]
+    required_identity: [strong acid]
+    source: *ghs
+  water_reactive:
+    restrictions: [water-reactive, water reactive]
+    codes: [H260, H261]
+    classes: [water-reactive, water reactive]
+    source: *ghs
+reactive_groups:
+  enabled: false
+  groups: [oxidising_agents, flammable]
+  source: https://ehs.ucla.edu/chp-chapter-4

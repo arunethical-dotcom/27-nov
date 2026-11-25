@@ -29,6 +29,7 @@ class SDSVersion(SQLModel, table=True):
     revision_date: date | None = None
     file_hash: str = Field(unique=True)
     status: str = "pending"
+    document_text: str | None = None
     uploaded_by: str
     uploaded_at: datetime = Field(default_factory=now)
 
@@ -40,9 +41,16 @@ class Chunk(SQLModel, table=True):
     method: str
     section: str
     page: int
+    page_start: int | None = None
+    page_end: int | None = None
     start: int
     end: int
     text: str
+
+    def matches_source(self, document_text):
+        return (document_text is not None and self.page_start is not None
+                and 0 <= self.start < self.end <= len(document_text)
+                and document_text[self.start:self.end] == self.text)
 
 
 class Fact(SQLModel, table=True):
@@ -95,3 +103,16 @@ class ChangeReport(SQLModel, table=True):
     affected_pairs_json: list = Field(sa_column=Column(JSON, nullable=False))
     confirmed_by: str
     confirmed_at: datetime = Field(default_factory=now)
+
+
+def initialize_database(engine):
+    """Add span fields to historical databases without guessing page origins."""
+    with engine.begin() as conn:
+        conn.exec_driver_sql("BEGIN IMMEDIATE")
+        SQLModel.metadata.create_all(conn)
+        for table, fields in {"sds_version": {"document_text": "TEXT"},
+                              "chunk": {"page_start": "INTEGER", "page_end": "INTEGER"}}.items():
+            existing = {row[1] for row in conn.exec_driver_sql(f"PRAGMA table_info({table})")}
+            for name, kind in fields.items():
+                if name not in existing:
+                    conn.exec_driver_sql(f"ALTER TABLE {table} ADD COLUMN {name} {kind}")

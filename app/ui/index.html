@@ -1,5 +1,5 @@
 <!doctype html>
 <html lang="en"><meta charset="utf-8"><title>SDS Chemical Compatibility Advisor</title>
-<main><h1>SDS Chemical Compatibility Advisor</h1><p>{{ disclaimer }}</p>{% if versions %}<h2>Review extracted facts</h2><ul>{% for name, id, number in versions %}
+<main><h1>SDS Chemical Compatibility Advisor</h1><p><a href="/sessions">Open sessions</a></p><p>{{ disclaimer }}</p>{% if versions %}<h2>Review extracted facts</h2><ul>{% for name, id, number in versions %}
 <li><a href="/versions/{{ id }}/facts">{{ name }} · version {{ number }}</a></li>
 {% endfor %}</ul>{% endif %}</main></html>

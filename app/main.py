@@ -3,6 +3,8 @@ from pathlib import Path
 from urllib.parse import parse_qs
 
 from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from app.session_ui import routes
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import event, text
@@ -84,6 +86,8 @@ def create_app(database_url="sqlite:///advisor.db"):
                 raise HTTPException(409, str(exc))
         return RedirectResponse(f"/versions/{version_id}/facts", status_code=303)
 
+    app.mount("/static", StaticFiles(directory=Path(__file__).parent / "ui/static"), name="static")
+    app.include_router(routes(engine,templates))
     return app
 
 

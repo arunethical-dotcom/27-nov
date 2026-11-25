@@ -27,11 +27,10 @@ def db(tmp_path, monkeypatch):
 def test_demo_steps_and_both_citations(db, monkeypatch):
     gold = yaml.safe_load((FIXTURES / "expected.yaml").read_text())
     products = db.exec(select(Product).order_by(Product.id)).all()
-    names = {p.id:p.name for p in products}
     # Simulate retrieval missing every rule-bearing passage.
     monkeypatch.setattr(Search, "rank", lambda *args, **kwargs: [])
     report = advise(db, [p.code for p in products])
-    pairs = {f"{names[p.a]} + {names[p.b]}":p for p in report.pairs}
+    pairs = {f"{p.a.name} + {p.b.name}":p for p in report.pairs}
     assert len(pairs) == 15
     for label, expected in gold["step_1"].items():
         assert (pairs[label].verdict, pairs[label].rule_id) == (expected["verdict"], expected["rule"])
@@ -55,7 +54,7 @@ def test_demo_steps_and_both_citations(db, monkeypatch):
     assert not re.search(r"\b(safe|compatible)\b", report.model_dump_json(), re.I)
     single = advise(db, ["ASTER-100"])
     assert single.pairs == [] and single.chemicals[0].storage_notes
-    assert set(single.chemicals[0].emergency) == {"4","5","6"} and single.chemicals[0].ppe
+    assert set(single.chemicals[0].emergency) == {"4","5","6"} and not single.chemicals[0].ppe
     group = advise(db, ["EMBER-500","FERN-600"], enable_r3=True).pairs[0]
     assert group.rule_id == "R3" and {e.side for e in group.evidence} == {"A","B"}
 

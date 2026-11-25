@@ -76,6 +76,7 @@ class Session(SQLModel, table=True):
 
 
 class SessionProduct(SQLModel, table=True):
+    version_id: int | None = Field(default=None, foreign_key="sds_version.id")
     __tablename__ = "session_product"
     session_id: int = Field(primary_key=True, foreign_key="session.id")
     product_id: int = Field(primary_key=True, foreign_key="product.id")
@@ -116,6 +117,7 @@ def initialize_database(engine):
         conn.exec_driver_sql("BEGIN IMMEDIATE")
         SQLModel.metadata.create_all(conn)
         for table, fields in {"sds_version": {"document_text": "TEXT", "reviewed_storage": "JSON", "reviewer": "TEXT"},
+                              "session_product": {"version_id": "INTEGER REFERENCES sds_version(id)"},
                               "fact": {"start": "INTEGER", "end": "INTEGER", "quote": "TEXT"},
                               "chunk": {"page_start": "INTEGER", "page_end": "INTEGER"}}.items():
             existing = {row[1] for row in conn.exec_driver_sql(f"PRAGMA table_info({table})")}

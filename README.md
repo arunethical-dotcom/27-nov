@@ -16,7 +16,7 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 Open http://localhost:8000. The loader writes advisor.db in the current directory, skips files already present by SHA-256 and stages replacement sheets for confirmation.
 
 ## Chunk offsets and windows
-Page and chunk metadata use one-based page numbers and zero-based, half-open character offsets into the original PyMuPDF page text. Section 0 holds the header. Removed page furniture separates contiguous spans. Each retained chunk can be checked directly against its source slice.
+Page and chunk metadata use one-based page numbers and zero-based, half-open character offsets into the stored SDS document text. page_start and page_end are inclusive; page is the starting page. Section 0 holds the header. Removed page furniture separates contiguous spans. Each retained chunk can be checked directly against its source slice.
 
 Windows use the bundled sentence-transformers/all-MiniLM-L6-v2 tokenizer and require no model download at runtime. The defaults in app/chunking are 200 content tokens with 40 tokens of overlap, excluding special tokens. Callers can lower the window size and configure the overlap.
 

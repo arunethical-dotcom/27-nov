@@ -1,4 +1,5 @@
-"""Page-local character spans in unmodified PyMuPDF text."""
+"""Exact character spans in the canonical SDS document text."""
+from bisect import bisect_right
 from pathlib import Path
 from functools import lru_cache
 import re
@@ -77,6 +78,43 @@ def content_spans(pages, config):
             yield page_number, start, page[start:cursor]
 
 
+def page_separator(page):
+    return "" if page.endswith("\n") else "\n"
+
+
+def document_text(pages):
+    """Keep each page verbatim, adding a line break only where necessary."""
+    return "".join(page + page_separator(page) for page in pages[:-1]) + (pages[-1] if pages else "")
+
+
+def page_starts(pages):
+    starts = []
+    cursor = 0
+    for page in pages:
+        starts.append(cursor)
+        cursor += len(page) + len(page_separator(page))
+    return starts
+
+
+def uninterrupted_spans(pages, starts, config):
+    """Join touching retained ranges, including a synthetic inter-page newline."""
+    left = right = previous_page = None
+    for page, local, source in content_spans(pages, config):
+        begin = starts[page - 1] + local
+        contiguous = begin == right
+        if previous_page and page == previous_page + 1 and local == 0:
+            contiguous = right == starts[previous_page - 1] + len(pages[previous_page - 1])
+        if left is not None and not contiguous:
+            yield left, right
+            left = None
+        if left is None:
+            left = begin
+        right = begin + len(source)
+        previous_page = page
+    if left is not None:
+        yield left, right
+
+
 WINDOW_SIZE = 200
 WINDOW_OVERLAP = 40
 
@@ -95,7 +133,10 @@ def chunks(pages, version_id, *, window_size=WINDOW_SIZE, window_overlap=WINDOW_
         raise ValueError("Expected 0 <= overlap < size <= 200")
     section = "0"
     last_subsection = {}
-    for page, origin, source in content_spans(pages, furniture_config):
+    starts = page_starts(pages)
+    document = document_text(pages)
+    for origin, limit in uninterrupted_spans(pages, starts, furniture_config):
+        source = document[origin:limit]
         headings = list(HEADING.finditer(source))
         boundaries = [(0, section)]
         top = section.split(".")[0] if section else None
@@ -121,8 +162,12 @@ def chunks(pages, version_id, *, window_size=WINDOW_SIZE, window_overlap=WINDOW_
                 continue
 
             def chunk(method, left, right):
+                begin = origin + start + left
+                end_pos = origin + start + right
+                first = bisect_right(starts, begin)
+                last = bisect_right(starts, end_pos - 1)
                 return Chunk(version_id=version_id, method=method, section=section,
-                             page=page, start=origin + start + left, end=origin + start + right,
+                             page=first, page_start=first, page_end=last, start=begin, end=end_pos,
                              text=body[left:right])
 
             yield chunk("section", 0, len(body))
@@ -134,4 +179,11 @@ def chunks(pages, version_id, *, window_size=WINDOW_SIZE, window_overlap=WINDOW_
                     break
             if section.split(".")[0] in {"2", "6", "7", "8", "10"}:
                 for left, right in sentence_spans(body):
+                    # A continued instruction can start after an inline subsection title.
+                    if left == 0 and "." in section:
+                        title = re.match(r"^\s*" + re.escape(section) + r"[ \t]+[^:\n]+:[ \t]+", body)
+                        if title and title.end() < right:
+                            instruction_start = origin + start + title.end()
+                            if bisect_right(starts, instruction_start) < bisect_right(starts, origin + start + right - 1):
+                                left = title.end()
                     yield chunk("sentence", left, right)

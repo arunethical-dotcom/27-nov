@@ -56,3 +56,7 @@ def test_import_persists_source_and_validates_exact_spans(tmp_path, monkeypatch)
         rows = db.exec(select(Chunk)).all()
         assert all(r.text == version.document_text[r.start:r.end] for r in rows)
         assert any(r.method == "sentence" and (r.page_start, r.page_end) == (1, 2) for r in rows)
+
+        assert all(r.matches_source(version.document_text) for r in rows)
+        rows[0].text += "!"
+        assert not rows[0].matches_source(version.document_text)

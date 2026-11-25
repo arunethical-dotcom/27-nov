@@ -5,12 +5,24 @@ from hashlib import sha256
 from pathlib import Path
 
 from sqlalchemy import event, func, text
-from sqlmodel import Session, SQLModel, create_engine, select
+from sqlmodel import Session, create_engine, select
 
-from app.chunking import chunks
-from app.db import Product, SDSVersion
+from app.chunking import chunks, document_text, page_starts
+from app.db import Chunk, Product, SDSVersion, initialize_database
 from app.ingest import page_texts
 from app.ingest.metadata import extract_metadata
+
+
+def upgrade_legacy_offsets(db, version, pages):
+    """Preserve historical chunk IDs and citations when their original PDF returns."""
+    starts = page_starts(pages)
+    for row in db.exec(select(Chunk).where(Chunk.version_id == version.id)):
+        if not 1 <= row.page <= len(pages) or pages[row.page - 1][row.start:row.end] != row.text:
+            raise ValueError("Legacy chunk does not match the original PDF")
+        row.start += starts[row.page - 1]
+        row.end += starts[row.page - 1]
+        row.page_start = row.page_end = row.page
+    version.document_text = document_text(pages)
 
 
 def load_directory(directory):
@@ -20,15 +32,20 @@ def load_directory(directory):
     def enable_foreign_keys(connection, record):
         connection.execute("PRAGMA foreign_keys=ON")
 
-    SQLModel.metadata.create_all(engine)
+    initialize_database(engine)
     pending = []
     for path in sorted(directory.glob("*.pdf")):
         digest = sha256(path.read_bytes()).hexdigest()
-        with Session(engine) as db:
-            if db.exec(select(SDSVersion.id).where(SDSVersion.file_hash == digest)).first():
+        with Session(engine) as db, db.begin():
+            db.execute(text("BEGIN IMMEDIATE"))
+            existing = db.exec(select(SDSVersion).where(SDSVersion.file_hash == digest)).first()
+            if existing:
+                if existing.document_text is None:
+                    upgrade_legacy_offsets(db, existing, page_texts(path))
                 print(f"{path.name}: duplicate")
                 continue
-        rows = list(chunks(page_texts(path), 0))
+        pages = page_texts(path)
+        rows = list(chunks(pages, 0))
         metadata = extract_metadata(rows)
         fields = {}
         for key in ("product_code", "revision_date", "product_name"):
@@ -41,9 +58,9 @@ def load_directory(directory):
         else:
             pending.append((fields["product_code"], date.fromisoformat(fields["revision_date"]),
                             path.name, digest, fields["product_name"],
-                            sorted({v.value for v in metadata["cas_numbers"]}), rows))
+                            sorted({v.value for v in metadata["cas_numbers"]}), document_text(pages), rows))
 
-    for code, revision, filename, digest, name, cas, rows in sorted(pending):
+    for code, revision, filename, digest, name, cas, source, rows in sorted(pending):
         with Session(engine) as db, db.begin():
             db.execute(text("BEGIN IMMEDIATE"))
             if db.exec(select(SDSVersion.id).where(SDSVersion.file_hash == digest)).first():
@@ -65,7 +82,7 @@ def load_directory(directory):
                 message = "older or same revision date: needs user confirmation"
             version = SDSVersion(product_id=product.id, version_no=number,
                                  revision_date=revision, file_hash=digest, status=status,
-                                 uploaded_by="demo")
+                                 uploaded_by="demo", document_text=source)
             db.add(version)
             db.flush()
             for row in rows:

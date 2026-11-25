@@ -40,7 +40,7 @@ Visit http://localhost:8000. Both entry points open advisor.db relative to the w
 ## How an import works
 
 1. The CLI enumerates *.pdf files in the specified directory and computes each file’s SHA-256. A hash already stored in sds_version produces a duplicate message.
-2. PyMuPDF extracts each page as text. The chunker retains offsets into this original string. The extractor reads identification data from section chunks in the header and Section 1, including its subsections.
+2. PyMuPDF extracts each page as text. The loader assembles the document text and retains it on the SDS version. The extractor reads identification data from section chunks in the header and Section 1, including its subsections.
 3. A file needs one distinct product code, name and interpretable revision date. Identical repeated values are accepted. Missing, conflicting or flagged required fields produce `<file>: needs manual metadata (missing <field>)`. The loader skips that file and continues. This recovery covers metadata problems; a corrupt or unreadable PDF can still interrupt extraction.
 4. The loader sorts eligible files by product code and revision date before writing a batch. For each file it takes a SQLite write lock with BEGIN IMMEDIATE, rechecks the hash, looks up the product by code and writes the version and its chunks together. The demo uploader is recorded as demo.
 5. A first version becomes active. Later files receive the next database version number for that product and enter pending status. A filename suffix has no effect. A newer revision prints `pending: needs user confirmation`. An equal or earlier date compared with the active revision prints `older or same revision date: needs user confirmation`. A pending import leaves the active version in place.
@@ -61,11 +61,14 @@ Each extracted occurrence carries value, raw, ambiguous, chunk_id, start and end
 
 ### Chunk and offset contract
 
-Pages are one-based. Character offsets are zero-based and half-open, measured within one original PyMuPDF page. The invariant is `pages[chunk.page - 1][chunk.start:chunk.end] == chunk.text`. A wrapped sentence retains its original newline. Removing an intervening footer splits a contiguous span so that the text on either side still has valid offsets.
+The canonical text keeps each extracted page verbatim and adds a newline between pages when the previous page lacks a trailing newline. It includes furniture. Offsets are zero-based and half-open. The invariant is `version.document_text[chunk.start:chunk.end] == chunk.text`. The one-based, inclusive page_start and page_end identify the source pages. The page field equals page_start. Sections, sentences and token windows may cross contiguous page boundaries. Removed furniture creates a hard split for all methods.
 
-- **Furniture.** A page zone is the first three or last three non-empty lines. With multiple pages, a label must occur in a zone on every page to count as repeated furniture. Only occurrences in a zone are removed. Page numbers such as Page 1 of 2 or 1 / 2 and configured furniture labels also qualify in that zone. Mid-page occurrences survive. Repeated substantive text in the edge zones can still satisfy this positional heuristic.
+On startup SQLite gains the new nullable columns. Loading an original PDF again by matching SHA-256 upgrades historical offsets in one transaction, preserving existing chunk IDs and boundaries. Until then, its legacy spans cannot validate against a stored document. New imports generate cross-page chunks immediately.
+
+- **Furniture.** Automatic matches require the same label at the same non-empty line position from the top or bottom on every page of a multi-page document, within the three-line edge zone. A trailing full stop protects a sentence from automatic removal. Configured labels and page-number patterns remain explicit edge-zone exclusions.
+
 - **Sections.** Section 0 holds the preamble. Top-level section numbers run from 1 to 16 and must increase. Recognized styles include SECTION 7: Handling, SECTION 7 - Handling, Section 7 Handling, 7. HANDLING AND STORAGE and 7 Handling and storage. Bare numbers require a recognized title prefix. Titled N.M headings must belong to the current top-level section and advance its last accepted subsection number. Measurement lines such as 8.5 mg per m3 remain body text.
-- **Section chunks.** Each chunk covers one continuous portion of a section or subsection on a single page. Page breaks and furniture can yield multiple chunks with the same section label.
+- **Section chunks.** Each chunk covers one continuous portion of a section or subsection across contiguous pages. Removed furniture can yield multiple chunks with the same section label.
 - **Window chunks.** The local MiniLM tokenizer supplies character spans for content tokens, excluding special tokens. Defaults are 200 tokens with 40 overlapping. The chunking API accepts window_size and window_overlap with 0 ≤ overlap < size ≤ 200.
 - **Sentence chunks.** Generated for Sections 2, 6, 7, 8 and 10 and their subsections. Headings, blank lines, bullets and sentence-ending punctuation can create boundaries. Ordinary line wraps, decimal points and common abbreviations such as e.g., i.e., approx., incl., max. and min. stay inside the span.
 

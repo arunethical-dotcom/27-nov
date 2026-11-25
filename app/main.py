@@ -8,7 +8,7 @@ from sqlalchemy import event
 from sqlmodel import create_engine
 from starlette.exceptions import HTTPException
 
-from app.db import SQLModel
+from app.db import initialize_database
 
 DISCLAIMER = "Decision support only. Confirm with a qualified person."
 templates = Jinja2Templates(directory=Path(__file__).parent / "ui")
@@ -23,7 +23,7 @@ def create_app(database_url="sqlite:///advisor.db"):
 
     @asynccontextmanager
     async def lifespan(app):
-        SQLModel.metadata.create_all(engine)
+        initialize_database(engine)
         yield
         engine.dispose()
 

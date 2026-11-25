@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% block title %}{{pair.a.name}} + {{pair.b.name}}{% endblock %}{% block content %}
+<a class="back" href="/sessions/{{work.id}}">← {{work.name}}</a>
+<h1>{{pair.a.name}} <span class="muted">+</span> {{pair.b.name}}</h1>
+<div class="decision"><span class="badge {{pair.verdict}}">{{labels[pair.verdict]}}</span><strong>{{pair.rule_id}}</strong> {{ {'R1':'Named restriction','R2':'Class restriction','R3':'Reactive group','R4':'Missing evidence','R5':'Sections checked'}[pair.rule_id] }}</div>
+<h2>Source evidence</h2><div class="columns">{% for side,p,version in [('A',pair.a,pair.a_version_id),('B',pair.b,pair.b_version_id)] %}<section><div class="eyebrow">Sheet {{side}} · SDS version ID {{version}}</div><h2><a href="/sessions/{{work.id}}/chemicals/{{p.code}}">{{p.name}}</a></h2><small>{{p.code}}</small>
+{% for e in pair.evidence if e.side == side %}<blockquote>{{e.quote}}</blockquote><span class="source">Section {{e.section}} · Page {{e.page}}</span>{% else %}<p class="hint">No passage cited from this sheet.</p>{% endfor %}</section>{% endfor %}</div>
+<section><h2>What you need to verify</h2>{% for g in pair.to_verify %}<p>{{g.product.name}} · Section {{g.section}} · {{g.reason|replace('_',' ')}}</p>{% else %}<p>No outstanding verification items for this pair.</p>{% endfor %}</section>{% endblock %}

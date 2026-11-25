@@ -179,3 +179,7 @@ The following CPU results use the six active demo sheets (276 chunks).
 ## Phase 3 update
 
 See README.md for the review page, confirmation endpoint, CLI and rule coverage. The two complete example advisories are in eval/examples/. Results from the six fictional retrieval fixtures demonstrate pipeline operation only.
+
+## Phase 4 update
+
+Session creation, incremental product additions, the pair matrix, pair and chemical detail pages and JSON downloads are implemented. See README.md for the three-command demo and API contract. Adding Fern to the five-product fixture session creates five results and preserves the original ten. Pair and chemical identities use product codes and names. SDS version IDs remain available for audit. Missing instruction evidence is shown under verification gaps. Pair abstention is reported individually and rolled up only when a nonempty set of pairs all abstain.

@@ -1,42 +1,83 @@
 {
-  "session_id": "55945946-f832-487d-93fe-8f1c00c44d9c",
+  "session_id": "3d42d7df-8729-455c-b307-20ea50a332e6",
   "chemicals": [
     {
-      "product_id": 4,
-      "sds_version": 5,
-      "ppe": [
+      "product": {
+        "code": "DAHLIA-400",
+        "name": "Dahlia 400"
+      },
+      "to_verify": [
         {
-          "chunk_id": 205,
+          "product": {
+            "code": "DAHLIA-400",
+            "name": "Dahlia 400"
+          },
           "section": "8",
-          "quote": "No data available.",
-          "page": 1
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 205,
+              "section": "8",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
+        },
+        {
+          "product": {
+            "code": "DAHLIA-400",
+            "name": "Dahlia 400"
+          },
+          "section": "4",
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 195,
+              "section": "4",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
+        },
+        {
+          "product": {
+            "code": "DAHLIA-400",
+            "name": "Dahlia 400"
+          },
+          "section": "5",
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 197,
+              "section": "5",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
+        },
+        {
+          "product": {
+            "code": "DAHLIA-400",
+            "name": "Dahlia 400"
+          },
+          "section": "6",
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 199,
+              "section": "6",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
         }
       ],
+      "sds_version": 5,
+      "ppe": [],
       "emergency": {
-        "4": [
-          {
-            "chunk_id": 195,
-            "section": "4",
-            "quote": "No data available.",
-            "page": 1
-          }
-        ],
-        "5": [
-          {
-            "chunk_id": 197,
-            "section": "5",
-            "quote": "No data available.",
-            "page": 1
-          }
-        ],
-        "6": [
-          {
-            "chunk_id": 199,
-            "section": "6",
-            "quote": "No data available.",
-            "page": 1
-          }
-        ]
+        "4": [],
+        "5": [],
+        "6": []
       },
       "storage_notes": [
         {
@@ -54,41 +95,82 @@
       ]
     },
     {
-      "product_id": 5,
-      "sds_version": 6,
-      "ppe": [
+      "product": {
+        "code": "EMBER-500",
+        "name": "Ember 500"
+      },
+      "to_verify": [
         {
-          "chunk_id": 251,
+          "product": {
+            "code": "EMBER-500",
+            "name": "Ember 500"
+          },
           "section": "8",
-          "quote": "No data available.",
-          "page": 1
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 251,
+              "section": "8",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
+        },
+        {
+          "product": {
+            "code": "EMBER-500",
+            "name": "Ember 500"
+          },
+          "section": "4",
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 241,
+              "section": "4",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
+        },
+        {
+          "product": {
+            "code": "EMBER-500",
+            "name": "Ember 500"
+          },
+          "section": "5",
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 243,
+              "section": "5",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
+        },
+        {
+          "product": {
+            "code": "EMBER-500",
+            "name": "Ember 500"
+          },
+          "section": "6",
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 245,
+              "section": "6",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
         }
       ],
+      "sds_version": 6,
+      "ppe": [],
       "emergency": {
-        "4": [
-          {
-            "chunk_id": 241,
-            "section": "4",
-            "quote": "No data available.",
-            "page": 1
-          }
-        ],
-        "5": [
-          {
-            "chunk_id": 243,
-            "section": "5",
-            "quote": "No data available.",
-            "page": 1
-          }
-        ],
-        "6": [
-          {
-            "chunk_id": 245,
-            "section": "6",
-            "quote": "No data available.",
-            "page": 1
-          }
-        ]
+        "4": [],
+        "5": [],
+        "6": []
       },
       "storage_notes": [
         {
@@ -108,8 +190,17 @@
   ],
   "pairs": [
     {
-      "a": 4,
-      "b": 5,
+      "a": {
+        "code": "DAHLIA-400",
+        "name": "Dahlia 400"
+      },
+      "b": {
+        "code": "EMBER-500",
+        "name": "Ember 500"
+      },
+      "a_version_id": 5,
+      "b_version_id": 6,
+      "abstained": false,
       "verdict": "CONFLICT",
       "rule_id": "R2",
       "evidence": [

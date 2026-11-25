@@ -73,10 +73,7 @@ inspect its proposals and storage passages, and submit a reviewer name. Clients
 can POST {"user":"Reviewer"} to /versions/{id}/facts/confirm. Confirmation applies
 to the active version. The demo flag is intended only for fictional inputs.
 Extraction uses regexes. Each fact records its chunk, document offsets and verbatim
-quote. Active source validation also checks the enclosing chunk. Missing PPE or
-emergency instructions are represented by their cited no-data sentence when
-available, otherwise an empty evidence list. Product IDs, active SDS version IDs
-and chunk IDs are database keys. The session UUID identifies one advisory call.
+quote. Active source validation also checks the enclosing chunk. Missing PPE or emergency instructions create verification items. Explicit no-data passages are cited in those items. Product codes and names identify chemicals; version and chunk IDs identify their sources. The session UUID identifies one advisory call.
 
 All confirmed facts in Sections 2, 7, 10 and 14 participate before ranking.
 BM25 orders optional evidence and chemical-card passages without a model download.
@@ -90,3 +87,19 @@ All examples are decision support only. Confirm with a qualified person.
 
 Full CLI examples from the demo database: eval/examples/step_1.json and
 eval/examples/dahlia_ember.json. Later imports can assign different database IDs.
+
+## Phase 4 · Run the session demo
+
+From the repository root with the dependencies installed and the virtual environment active, start with a clean working directory for the database. Run the third command in another terminal.
+
+```sh
+python -m app.ingest.load fixtures/ --confirm-demo
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+xdg-open http://127.0.0.1:8000/sessions
+```
+
+Choose **Open fixture demo** for the six-product matrix. Select either conflict to see its cited SDS passages, or select a product name to inspect PPE, emergency and storage evidence. **Create session** starts an empty session for adding products individually. Local HTMX assets support offline use, and forms also work with ordinary browser navigation.
+
+POST /sessions accepts a JSON name. POST /sessions/{id}/products accepts a JSON code. The second endpoint returns the session advisory and treats repeat additions as idempotent. Each addition commits membership and its new pairs together. Existing results retain their version IDs. GET /sessions/{id}/download exports JSON. The session read path verifies saved evidence against active, confirmed sources. A stored version that has since been archived requires review.
+
+Pairs carry product codes, names, version IDs and individual abstention flags. Session abstention requires at least one pair and every pair abstaining. Card verification items distinguish an explicit no-data passage from missing instructions and retain citations for explicit gaps.

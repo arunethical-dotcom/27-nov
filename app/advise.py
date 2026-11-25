@@ -10,12 +10,13 @@ from sqlalchemy import text
 from app.db import Chunk, SDSVersion
 from app.facts import CLEAR, FORBIDDEN, RESTRICT, facts, mapping, mentions, valid
 from app.retrieval.search import Search
-from app.schemas import Advisory, Chemical, Evidence, Gap, Pair, Passage
+from app.schemas import Advisory, Chemical, Evidence, Gap, Pair, Passage, ProductRef
 
 
 class Sheet:
     def __init__(self, db, product, version):
         self.product, self.version = product, version
+        self.ref = ProductRef(code=product.code, name=product.name)
         self.chunks = {r.id: r for r in db.exec(select(Chunk).where(Chunk.version_id == version.id))}
         self.confirmed = [f for f in facts(db, version.id) if f.confirmed_by and f.confirmed_at]
         self.notes = [SimpleNamespace(**n, version_id=version.id) for n in version.reviewed_storage or []
@@ -33,16 +34,26 @@ class Sheet:
         return Passage(chunk_id=c.id, section=c.section, page=c.page, quote=fact.quote)
 
     def card(self, search):
+        gaps = []
         def take(section, purpose):
             candidates = [f for f in self.confirmed if self.section(f).split(".")[0] == section
                           and f.type in {"ppe", "emergency", "no_data"}]
             ranking = search.rank(self.product.code, [purpose, "No data available"], "section", "bm25", purpose)
             order = {key:i for i,key in enumerate(ranking)}
             candidates.sort(key=lambda f: order.get(f.chunk_id, len(order)))
-            return [p for f in candidates if (p := self.passage(f))]
-        return Chemical(product_id=self.product.id, sds_version=self.version.id,
+            instructions, missing = [], []
+            for f in candidates:
+                p = self.passage(f)
+                if p:
+                    (missing if f.type == "no_data" else instructions).append(p)
+            if missing or not instructions:
+                gaps.append(Gap(product=self.ref, section=section,
+                                reason="SDS_SAYS_NO_DATA" if missing else "NOT_LOCATED",
+                                evidence=missing))
+            return instructions
+        return Chemical(product=self.ref, sds_version=self.version.id,
                         ppe=take("8", "ppe"), emergency={s: take(s, "emergency") for s in ("4","5","6")},
-                        storage_notes=[p for f in self.notes if (p := self.passage(f))])
+                        to_verify=gaps, storage_notes=[p for f in self.notes if (p := self.passage(f))])
 
 
 def matches(f, spec):
@@ -75,7 +86,7 @@ def storage_covered(sheet, note, facts_by_section, search):
 
 def decide(a, b, search, enable_r3=False):
     sheets = [a, b]
-    ids = dict(a=a.product.id, b=b.product.id)
+    ids = dict(a=a.ref, b=b.ref, a_version_id=a.version.id, b_version_id=b.version.id)
     ranking = search.pair(a.product.code, b.product.code, "section", "bm25")
     def order(side, f):
         seq = ranking[sheets[side].product.code]
@@ -86,10 +97,10 @@ def decide(a, b, search, enable_r3=False):
         return Evidence(**p.model_dump(), side="AB"[side]) if p else None
 
     def gap(side, section, reason="NOT_LOCATED"):
-        return Gap(product=sheets[side].product.id, section=section, reason=reason)
+        return Gap(product=sheets[side].ref, section=section, reason=reason)
 
     def result(rule, verdict, proof, gaps):
-        return Pair(**ids, rule_id=rule, verdict=verdict, evidence=proof, to_verify=gaps)
+        return Pair(**ids, abstained=verdict == "UNRESOLVED", rule_id=rule, verdict=verdict, evidence=proof, to_verify=gaps)
 
     # Rankings only order alternative proofs. Every eligible fact is inspected.
     candidates = {"R1": [], "R2": [], "R3": []}
@@ -123,6 +134,14 @@ def decide(a, b, search, enable_r3=False):
         proofs.sort(key=lambda proof: (not any(f.type == "h_code" for _,f in proof),
                                        not any(f.type.startswith("restriction_") and sheets[i].section(f).split(".")[0] == "7" for i,f in proof),
                                        sum(order(i,f) for i,f in proof)))
+        if rule == "R1":
+            all_quotes = []
+            for [(side, fact)] in proofs:
+                passage = evidence(side, fact)
+                if passage and passage not in all_quotes:
+                    all_quotes.append(passage)
+            if all_quotes:
+                return result(rule, "CONFLICT", all_quotes, [])
         missing = []
         for proof in proofs:
             quotes = [evidence(i,f) for i,f in proof]
@@ -175,8 +194,7 @@ def advise(db, codes, enable_r3=None):
     pairs = [decide(a,b,search,flag) for a,b in combinations(sheets,2)]
     cards = [s.card(search) for s in sheets]
     return Advisory(session_id=str(uuid4()), chemicals=cards, pairs=pairs,
-                    abstained=any(p.verdict == "UNRESOLVED" for p in pairs)
-                    or any(not c.ppe or not all(c.emergency.values()) or not c.storage_notes for c in cards))
+                    abstained=bool(pairs) and all(p.abstained for p in pairs))
 
 
 if __name__ == "__main__":

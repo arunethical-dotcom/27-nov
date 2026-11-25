@@ -1,42 +1,83 @@
 {
-  "session_id": "9246d559-b15e-4b0d-a6ed-7a37f5a19d2f",
+  "session_id": "b0dd3326-313e-408a-a91d-189b906f53e0",
   "chemicals": [
     {
-      "product_id": 1,
-      "sds_version": 1,
-      "ppe": [
+      "product": {
+        "code": "ASTER-100",
+        "name": "Aster 100"
+      },
+      "to_verify": [
         {
-          "chunk_id": 21,
+          "product": {
+            "code": "ASTER-100",
+            "name": "Aster 100"
+          },
           "section": "8",
-          "quote": "No data available.",
-          "page": 1
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 21,
+              "section": "8",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
+        },
+        {
+          "product": {
+            "code": "ASTER-100",
+            "name": "Aster 100"
+          },
+          "section": "4",
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 11,
+              "section": "4",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
+        },
+        {
+          "product": {
+            "code": "ASTER-100",
+            "name": "Aster 100"
+          },
+          "section": "5",
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 13,
+              "section": "5",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
+        },
+        {
+          "product": {
+            "code": "ASTER-100",
+            "name": "Aster 100"
+          },
+          "section": "6",
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 15,
+              "section": "6",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
         }
       ],
+      "sds_version": 1,
+      "ppe": [],
       "emergency": {
-        "4": [
-          {
-            "chunk_id": 11,
-            "section": "4",
-            "quote": "No data available.",
-            "page": 1
-          }
-        ],
-        "5": [
-          {
-            "chunk_id": 13,
-            "section": "5",
-            "quote": "No data available.",
-            "page": 1
-          }
-        ],
-        "6": [
-          {
-            "chunk_id": 15,
-            "section": "6",
-            "quote": "No data available.",
-            "page": 1
-          }
-        ]
+        "4": [],
+        "5": [],
+        "6": []
       },
       "storage_notes": [
         {
@@ -54,41 +95,82 @@
       ]
     },
     {
-      "product_id": 2,
-      "sds_version": 3,
-      "ppe": [
+      "product": {
+        "code": "BOREAL-200",
+        "name": "Boreal 200"
+      },
+      "to_verify": [
         {
-          "chunk_id": 113,
+          "product": {
+            "code": "BOREAL-200",
+            "name": "Boreal 200"
+          },
           "section": "8",
-          "quote": "No data available.",
-          "page": 1
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 113,
+              "section": "8",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
+        },
+        {
+          "product": {
+            "code": "BOREAL-200",
+            "name": "Boreal 200"
+          },
+          "section": "4",
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 103,
+              "section": "4",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
+        },
+        {
+          "product": {
+            "code": "BOREAL-200",
+            "name": "Boreal 200"
+          },
+          "section": "5",
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 105,
+              "section": "5",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
+        },
+        {
+          "product": {
+            "code": "BOREAL-200",
+            "name": "Boreal 200"
+          },
+          "section": "6",
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 107,
+              "section": "6",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
         }
       ],
+      "sds_version": 3,
+      "ppe": [],
       "emergency": {
-        "4": [
-          {
-            "chunk_id": 103,
-            "section": "4",
-            "quote": "No data available.",
-            "page": 1
-          }
-        ],
-        "5": [
-          {
-            "chunk_id": 105,
-            "section": "5",
-            "quote": "No data available.",
-            "page": 1
-          }
-        ],
-        "6": [
-          {
-            "chunk_id": 107,
-            "section": "6",
-            "quote": "No data available.",
-            "page": 1
-          }
-        ]
+        "4": [],
+        "5": [],
+        "6": []
       },
       "storage_notes": [
         {
@@ -106,41 +188,82 @@
       ]
     },
     {
-      "product_id": 3,
-      "sds_version": 4,
-      "ppe": [
+      "product": {
+        "code": "CIRRUS-300",
+        "name": "Cirrus 300"
+      },
+      "to_verify": [
         {
-          "chunk_id": 159,
+          "product": {
+            "code": "CIRRUS-300",
+            "name": "Cirrus 300"
+          },
           "section": "8",
-          "quote": "No data available.",
-          "page": 1
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 159,
+              "section": "8",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
+        },
+        {
+          "product": {
+            "code": "CIRRUS-300",
+            "name": "Cirrus 300"
+          },
+          "section": "4",
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 149,
+              "section": "4",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
+        },
+        {
+          "product": {
+            "code": "CIRRUS-300",
+            "name": "Cirrus 300"
+          },
+          "section": "5",
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 151,
+              "section": "5",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
+        },
+        {
+          "product": {
+            "code": "CIRRUS-300",
+            "name": "Cirrus 300"
+          },
+          "section": "6",
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": [
+            {
+              "chunk_id": 153,
+              "section": "6",
+              "quote": "No data available.",
+              "page": 1
+            }
+          ]
         }
       ],
+      "sds_version": 4,
+      "ppe": [],
       "emergency": {
-        "4": [
-          {
-            "chunk_id": 149,
-            "section": "4",
-            "quote": "No data available.",
-            "page": 1
-          }
-        ],
-        "5": [
-          {
-            "chunk_id": 151,
-            "section": "5",
-            "quote": "No data available.",
-            "page": 1
-          }
-        ],
-        "6": [
-          {
-            "chunk_id": 153,
-            "section": "6",
-            "quote": "No data available.",
-            "page": 1
-          }
-        ]
+        "4": [],
+        "5": [],
+        "6": []
       },
       "storage_notes": [
         {
@@ -160,8 +283,17 @@
   ],
   "pairs": [
     {
-      "a": 1,
-      "b": 2,
+      "a": {
+        "code": "ASTER-100",
+        "name": "Aster 100"
+      },
+      "b": {
+        "code": "BOREAL-200",
+        "name": "Boreal 200"
+      },
+      "a_version_id": 1,
+      "b_version_id": 3,
+      "abstained": false,
       "verdict": "CONFLICT",
       "rule_id": "R1",
       "evidence": [
@@ -171,14 +303,30 @@
           "quote": "Do not store together with Boreal 200 (BOREAL-200).",
           "page": 1,
           "side": "A"
+        },
+        {
+          "chunk_id": 32,
+          "section": "10.5",
+          "quote": "Boreal 200 (BOREAL-200).",
+          "page": 1,
+          "side": "A"
         }
       ],
       "to_verify": [],
       "change_flag": "NONE"
     },
     {
-      "a": 1,
-      "b": 3,
+      "a": {
+        "code": "ASTER-100",
+        "name": "Aster 100"
+      },
+      "b": {
+        "code": "CIRRUS-300",
+        "name": "Cirrus 300"
+      },
+      "a_version_id": 1,
+      "b_version_id": 4,
+      "abstained": true,
       "verdict": "UNRESOLVED",
       "rule_id": "R4",
       "evidence": [
@@ -227,31 +375,56 @@
       ],
       "to_verify": [
         {
-          "product": 1,
+          "product": {
+            "code": "ASTER-100",
+            "name": "Aster 100"
+          },
           "section": "2",
-          "reason": "SDS_SAYS_NO_DATA"
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": []
         },
         {
-          "product": 3,
+          "product": {
+            "code": "CIRRUS-300",
+            "name": "Cirrus 300"
+          },
           "section": "2",
-          "reason": "SDS_SAYS_NO_DATA"
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": []
         },
         {
-          "product": 3,
+          "product": {
+            "code": "CIRRUS-300",
+            "name": "Cirrus 300"
+          },
           "section": "7",
-          "reason": "SDS_SAYS_NO_DATA"
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": []
         },
         {
-          "product": 3,
+          "product": {
+            "code": "CIRRUS-300",
+            "name": "Cirrus 300"
+          },
           "section": "10.5",
-          "reason": "SDS_SAYS_NO_DATA"
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": []
         }
       ],
       "change_flag": "NONE"
     },
     {
-      "a": 2,
-      "b": 3,
+      "a": {
+        "code": "BOREAL-200",
+        "name": "Boreal 200"
+      },
+      "b": {
+        "code": "CIRRUS-300",
+        "name": "Cirrus 300"
+      },
+      "a_version_id": 3,
+      "b_version_id": 4,
+      "abstained": true,
       "verdict": "UNRESOLVED",
       "rule_id": "R4",
       "evidence": [
@@ -300,39 +473,63 @@
       ],
       "to_verify": [
         {
-          "product": 2,
+          "product": {
+            "code": "BOREAL-200",
+            "name": "Boreal 200"
+          },
           "section": "2",
-          "reason": "SDS_SAYS_NO_DATA"
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": []
         },
         {
-          "product": 2,
+          "product": {
+            "code": "BOREAL-200",
+            "name": "Boreal 200"
+          },
           "section": "7",
-          "reason": "SDS_SAYS_NO_DATA"
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": []
         },
         {
-          "product": 2,
+          "product": {
+            "code": "BOREAL-200",
+            "name": "Boreal 200"
+          },
           "section": "10.5",
-          "reason": "SDS_SAYS_NO_DATA"
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": []
         },
         {
-          "product": 3,
+          "product": {
+            "code": "CIRRUS-300",
+            "name": "Cirrus 300"
+          },
           "section": "2",
-          "reason": "SDS_SAYS_NO_DATA"
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": []
         },
         {
-          "product": 3,
+          "product": {
+            "code": "CIRRUS-300",
+            "name": "Cirrus 300"
+          },
           "section": "7",
-          "reason": "SDS_SAYS_NO_DATA"
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": []
         },
         {
-          "product": 3,
+          "product": {
+            "code": "CIRRUS-300",
+            "name": "Cirrus 300"
+          },
           "section": "10.5",
-          "reason": "SDS_SAYS_NO_DATA"
+          "reason": "SDS_SAYS_NO_DATA",
+          "evidence": []
         }
       ],
       "change_flag": "NONE"
     }
   ],
-  "abstained": true,
+  "abstained": false,
   "disclaimer": "Decision support only. Confirm with a qualified person."
 }

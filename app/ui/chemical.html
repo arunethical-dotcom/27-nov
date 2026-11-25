@@ -1,0 +1,5 @@
+{% extends 'base.html' %}{% block title %}{{card.product.name}}{% endblock %}{% macro passages(items) %}{% for p in items %}<blockquote>{{p.quote}}</blockquote><span class="source">Section {{p.section}} · Page {{p.page}}</span>{% else %}<p class="hint">No confirmed instruction available.</p>{% endfor %}{% endmacro %}
+{% block content %}<a class="back" href="/sessions/{{work.id}}">← {{work.name}}</a><h1>{{card.product.name}}</h1><p>{{card.product.code}} · SDS version ID {{card.sds_version}}</p>
+<div class="columns"><section><h2>Personal protective equipment</h2>{{passages(card.ppe)}}</section><section><h2>Storage notes</h2>{{passages(card.storage_notes)}}</section></div>
+<section><h2>Emergency steps</h2>{% for n,name in [('4','First aid'),('5','Fire response'),('6','Spill response')] %}<h3>{{n}} · {{name}}</h3>{{passages(card.emergency[n])}}{% endfor %}</section>
+<section><h2>What you need to verify</h2>{% for g in card.to_verify %}<p>Section {{g.section}} · {{g.reason|replace('_',' ')}}</p>{% for p in g.evidence %}<q>{{p.quote}}</q> · Page {{p.page}}{% endfor %}{% else %}<p>No outstanding verification items.</p>{% endfor %}</section>{% endblock %}

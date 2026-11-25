@@ -14,7 +14,7 @@ def metadata(text):
     ("2026-03-11", "2026-03-11", False), ("23/03/2026", "2026-03-23", False),
     ("23.03.2026", "2026-03-23", False), ("11 March 2026", "2026-03-11", False),
     ("11/03/2026", "11/03/2026", True), ("11.03.2026", "11.03.2026", True),
-    ("03/03/2026", "2026-03-03", False),
+    ("03/03/2026", "03/03/2026", True),
 ])
 def test_revision_formats_and_raw_source(label, raw, value, ambiguous):
     text = f"{label}: {raw}"
@@ -33,3 +33,17 @@ def test_product_aliases(label):
 def test_cas_checksum():
     items = metadata("CAS: 64-17-5, 64-17-6, 67-64-1")["cas_numbers"]
     assert [i.value for i in items] == ["64-17-5", "67-64-1"]
+
+@pytest.mark.parametrize("label,raw,field", [
+    ("Revision Date", "03/11/2026", "revision_date"),
+    ("Revised", "03/03/2026", "revision_date"),
+    ("Product identifier", "Example solvent", "product_name"),
+    ("Trade name", "Example solvent", "product_name"),
+    ("Product code", "EX-100", "product_code"),
+])
+def test_whitespace_delimited_metadata(label, raw, field):
+    text = f"{label} {raw}"
+    item, = metadata(text)[field]
+    assert (item.value, item.raw) == (raw, raw)
+    assert item.ambiguous == (field == "revision_date")
+    assert text[item.start - 70:item.end - 70] == raw

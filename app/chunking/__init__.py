@@ -55,16 +55,20 @@ def content_spans(pages, config):
     for page in pages:
         lines = page.splitlines(keepends=True)
         nonempty = [i for i, line in enumerate(lines) if line.strip()]
-        zone = set(nonempty[:3] + nonempty[-3:])
+        zone = {}
+        for position, index in enumerate(nonempty[:3]):
+            zone.setdefault(index, set()).add(("top", position, lines[index].strip()))
+        for position, index in enumerate(reversed(nonempty[-3:])):
+            zone.setdefault(index, set()).add(("bottom", position, lines[index].strip()))
         zones.append(zone)
-        labels.append({lines[i].strip() for i in zone})
+        labels.append(set().union(*zone.values()))
     repeated = set.intersection(*labels) if len(labels) > 1 else set()
     for page_number, (page, zone) in enumerate(zip(pages, zones), 1):
         start = cursor = 0
         for index, line in enumerate(page.splitlines(keepends=True)):
             label = line.strip()
-            if index in zone and (label in repeated or PAGE_NUMBER.fullmatch(label)
-                                  or label in configured):
+            if index in zone and (PAGE_NUMBER.fullmatch(label) or label in configured
+                                  or (not label.endswith(".") and zone[index] & repeated)):
                 if cursor > start:
                     yield page_number, start, page[start:cursor]
                 start = cursor + len(line)

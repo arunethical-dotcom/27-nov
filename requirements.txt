@@ -44,3 +44,4 @@ truststore==0.10.5
 typing-extensions==4.16.0
 typing-inspection==0.4.5
 uvicorn==0.54.0
+rank-bm25==0.2.2

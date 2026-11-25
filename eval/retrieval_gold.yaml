@@ -1,0 +1,33 @@
+# Passage labels apply to the active demo revisions. Each pair references
+# evidence independently of the retriever, using product, section and exact text.
+passages:
+  a7: [ASTER-100, '7', 'Do not store together with Boreal 200 (BOREAL-200).']
+  a10: [ASTER-100, '10.5', 'Incompatible materials: Boreal 200 (BOREAL-200).']
+  b7: [BOREAL-200, '7', 'Storage compatibility data unavailable.']
+  b10: [BOREAL-200, '10.5', 'Incompatible materials: No data available.']
+  c7: [CIRRUS-300, '7', 'Storage compatibility data unavailable.']
+  c10: [CIRRUS-300, '10.5', 'Incompatible materials: No data available.']
+  d7: [DAHLIA-400, '7', 'Keep away from strong oxidising agents.']
+  d10: [DAHLIA-400, '10.5', 'Incompatible materials: Strong oxidising agents.']
+  e2: [EMBER-500, '2', 'H272 May intensify fire; oxidiser.']
+  e7: [EMBER-500, '7', 'Storage compatibility data unavailable.']
+  e10: [EMBER-500, '10.5', 'Incompatible materials: No data available.']
+  f2: [FERN-600, '2', 'H226 Flammable liquid and vapour.']
+  f7: [FERN-600, '7', 'Storage compatibility data unavailable.']
+  f10: [FERN-600, '10.5', 'Incompatible materials: No data available.']
+pairs:
+  - {products: [ASTER-100, BOREAL-200], evidence: [a7, a10]}
+  - {products: [ASTER-100, CIRRUS-300], evidence: [c7, c10]}
+  - {products: [ASTER-100, DAHLIA-400], evidence: [a7, a10, d7, d10]}
+  - {products: [ASTER-100, EMBER-500], evidence: [e7, e10]}
+  - {products: [ASTER-100, FERN-600], evidence: [f7, f10]}
+  - {products: [BOREAL-200, CIRRUS-300], evidence: [b7, b10, c7, c10]}
+  - {products: [BOREAL-200, DAHLIA-400], evidence: [b7, b10, d7, d10]}
+  - {products: [BOREAL-200, EMBER-500], evidence: [b7, b10, e7, e10]}
+  - {products: [BOREAL-200, FERN-600], evidence: [b7, b10, f7, f10]}
+  - {products: [CIRRUS-300, DAHLIA-400], evidence: [c7, c10, d7, d10]}
+  - {products: [CIRRUS-300, EMBER-500], evidence: [c7, c10, e7, e10]}
+  - {products: [CIRRUS-300, FERN-600], evidence: [c7, c10, f7, f10]}
+  - {products: [DAHLIA-400, EMBER-500], evidence: [d7, d10, e2]}
+  - {products: [DAHLIA-400, FERN-600], evidence: [d7, d10, f7, f10]}
+  - {products: [EMBER-500, FERN-600], evidence: [e2, e7, e10, f2]}

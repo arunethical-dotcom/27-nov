@@ -1,0 +1,6 @@
+{% extends 'base.html' %}{% block title %}Change reports{% endblock %}{% block content %}
+<h1>Change reports</h1>
+<section>{% if items %}<table class="grid"><thead><tr><th>Product</th><th>From</th><th>To</th><th>Pairs changed</th><th>Confirmed by</th><th>When (UTC)</th></tr></thead><tbody>
+{% for i in items %}<tr><td><a href="/change-reports/{{i.id}}">{{i.product}}</a></td><td>{{i.old}}</td><td>{{i.new}}</td><td>{{i.changed}}</td><td>{{i.by}}</td><td>{{i.at.strftime('%Y-%m-%d %H:%M')}}</td></tr>{% endfor %}</tbody></table>
+{% else %}<p>No SDS has been replaced yet.</p>{% endif %}</section>
+{% endblock %}

@@ -41,7 +41,9 @@ class Pair(Schema):
     rule_id: Literal["R1", "R2", "R3", "R4", "R5"]
     evidence: list[Evidence]
     to_verify: list[Gap]
-    change_flag: Literal["NONE"] = "NONE"
+    change_flag: Literal["NONE", "STATUS_CHANGED", "EVIDENCE_CHANGED"] = "NONE"
+    previous_verdict: Literal["CONFLICT", "UNRESOLVED", "NO_CONFLICT_FOUND"] | None = None
+    change_report_id: int | None = None
 
 
 class Chemical(Schema):

@@ -63,6 +63,9 @@ def read_session(db, sid):
     pairs, links = [], {}
     result_rows = db.exec(select(PairResult).where(PairResult.session_id == sid).order_by(PairResult.id))
     for row in result_rows:
+        # Rows pinned to an archived version stay as history; show current ones only.
+        if row.a_version_id not in sheets or row.b_version_id not in sheets:
+            continue
         a,b = sheets[row.a_version_id],sheets[row.b_version_id]
         evidence = []
         gaps = [Gap.model_validate(g) for g in row.to_verify_json]
@@ -83,7 +86,9 @@ def read_session(db, sid):
             verdict,rule = "UNRESOLVED","R4"
             gaps.extend(invalid)
         pair = Pair(a=a.ref,b=b.ref,a_version_id=a.version.id,b_version_id=b.version.id,
-                    abstained=verdict=="UNRESOLVED",verdict=verdict,rule_id=rule,evidence=evidence,to_verify=gaps)
+                    abstained=verdict=="UNRESOLVED",verdict=verdict,rule_id=rule,evidence=evidence,to_verify=gaps,
+                    change_flag=row.change_flag or "NONE",previous_verdict=row.previous_verdict,
+                    change_report_id=row.change_report_id)
         pairs.append(pair)
         links[tuple(sorted((a.ref.code,b.ref.code)))] = (row.id,pair)
     report = Advisory(session_id=str(sid),chemicals=cards,pairs=pairs,

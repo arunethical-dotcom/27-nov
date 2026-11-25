@@ -1,0 +1,15 @@
+{% extends 'base.html' %}{% import '_diff.html' as d %}{% block title %}Review SDS update{% endblock %}{% block content %}
+<a class="back" href="/upload">← Uploads</a>
+<h1>Replace {{s.product.name}} version {{s.old.version_no}} ({{s.old.revision_date}}) with version {{s.new.version_no}} ({{s.new.revision_date}})?</h1>
+<p class="hint">Nothing has changed yet. This page shows what would happen if you replace the current sheet.</p>
+{% if s.not_later %}<p class="warn" role="alert"><strong>Check the date:</strong> the new sheet's revision date is not later than the current one.</p>{% endif %}
+<section><h2>What changed in the sheet</h2>{{ d.fields(s.fields) }}</section>
+<section><h2>Saved pairs this would affect</h2>
+<p class="count">{{s.counts.STATUS_CHANGED}} status changed · {{s.counts.EVIDENCE_CHANGED}} evidence changed · {{s.counts.NONE}} no change</p>
+{{ d.pairs(s.affected, s.product, labels, flags) }}</section>
+<section><h2>Your decision</h2><div class="actions">
+<form method="post" action="/versions/{{s.new.id}}/replace"><label>Your name (recorded in the change report)<input name="user" required maxlength="120"></label><button>Replace with version {{s.new.version_no}}</button></form>
+<form method="post" action="/versions/{{s.new.id}}/discard"><button class="danger">Keep current version {{s.old.version_no}}</button></form>
+<a href="/sessions">Decide later</a></div>
+<p class="hint">Replace archives version {{s.old.version_no}} (it stays available in the change report) and re-checks every saved pair. Keep current deletes the uploaded file from the system.</p></section>
+{% endblock %}

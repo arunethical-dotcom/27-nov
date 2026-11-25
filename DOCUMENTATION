@@ -183,3 +183,7 @@ See README.md for the review page, confirmation endpoint, CLI and rule coverage.
 ## Phase 4 update
 
 Session creation, incremental product additions, the pair matrix, pair and chemical detail pages and JSON downloads are implemented. See README.md for the three-command demo and API contract. Adding Fern to the five-product fixture session creates five results and preserves the original ten. Pair and chemical identities use product codes and names. SDS version IDs remain available for audit. Missing instruction evidence is shown under verification gaps. Pair abstention is reported individually and rolled up only when a nonempty set of pairs all abstain.
+
+## Phase 5 update
+
+Revision-aware rechecks are implemented in app/revisions.py (staging, preview, replace, discard, change flags) and app/revision_ui.py (upload page, preview, change reports). The preview applies the replacement inside a transaction and rolls it back. Replacement archives the old version, confirms the new version's facts under the reviewer's name, re-runs every saved pair that includes the product, moves session membership to the new version and stores a change report with field diffs and affected pairs. pair_result gained change_flag, previous_verdict and change_report_id; existing databases are migrated on start. Upload parsing uses python-multipart. tests/test_revisions.py covers preview without side effects, demo step 3, keep current, duplicate and unreadable uploads, new-product uploads and loader-staged revisions. See DEMO.md for the presenter script.

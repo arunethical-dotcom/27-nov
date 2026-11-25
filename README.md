@@ -1,5 +1,5 @@
 # SDS Chemical Compatibility Advisor
-CAT1-037 is a local SDS review application. The current milestone includes ingestion, retrieval, fact confirmation and deterministic advisory checks.
+CAT1-037 is a local SDS review application: ingestion, hybrid retrieval, fact confirmation, deterministic cited storage verdicts, PPE and emergency cards, sessions, and revision-aware rechecks. **For the 5-minute demo, follow [DEMO.md](DEMO.md).**
 
 ## Run locally
 The dependencies in requirements.txt were frozen from a clean Python 3.11.18 virtual environment. CI uses Python 3.11 on Ubuntu.
@@ -100,6 +100,23 @@ xdg-open http://127.0.0.1:8000/sessions
 
 Choose **Open fixture demo** for the six-product matrix. Select either conflict to see its cited SDS passages, or select a product name to inspect PPE, emergency and storage evidence. **Create session** starts an empty session for adding products individually. Local HTMX assets support offline use, and forms also work with ordinary browser navigation.
 
-POST /sessions accepts a JSON name. POST /sessions/{id}/products accepts a JSON code. The second endpoint returns the session advisory and treats repeat additions as idempotent. Each addition commits membership and its new pairs together. Existing results retain their version IDs. GET /sessions/{id}/download exports JSON. The session read path verifies saved evidence against active, confirmed sources. A stored version that has since been archived requires review.
+POST /sessions accepts a JSON name. POST /sessions/{id}/products accepts a JSON code. The second endpoint returns the session advisory and treats repeat additions as idempotent. Each addition commits membership and its new pairs together. Existing results retain their version IDs. GET /sessions/{id}/download exports JSON. The session read path verifies saved evidence against active, confirmed sources. Pair results pinned to an archived version are kept as history and are not shown in the current matrix.
 
 Pairs carry product codes, names, version IDs and individual abstention flags. Session abstention requires at least one pair and every pair abstaining. Card verification items distinguish an explicit no-data passage from missing instructions and retain citations for explicit gaps.
+
+## Phase 5 · Revision-aware rechecks
+
+A sheet for a product that already exists never replaces the active one by itself.
+
+1. **Stage.** `POST /upload` (or the loader) matches the product by code, then name, then CAS number. A known product's new file is stored as a **pending** version. An identical file is rejected as a duplicate. A new product becomes active and goes to fact review.
+2. **Preview.** `GET /versions/{id}/preview` runs the real replacement inside a database transaction and rolls it back, so the rules and citation checks are exactly the ones a confirmed replacement uses, and nothing is saved. It shows word-level changes in Sections 2, 7, 8, 10.5 and 14 and every saved pair that includes the product, with old and new verdicts.
+3. **Decide.** `POST /versions/{id}/replace` with a reviewer name archives the old version, activates the new one, confirms its facts under that name, re-checks every saved pair, moves session membership to the new version and writes a change report. `POST /versions/{id}/discard` keeps the current version and deletes the pending file.
+4. **Flags.** `STATUS_CHANGED` means the verdict changed. `EVIDENCE_CHANGED` means the verdict is the same but what it rests on changed: the cited quotes for a decision, or the missing items for an unresolved pair. Both appear in the session matrix, the pair page, the JSON (`change_flag`, `previous_verdict`, `change_report_id`) and `GET /change-reports/{id}`.
+
+To demo the upload live, load everything except the revision:
+
+```sh
+python -m app.ingest.load fixtures/ --confirm-demo --exclude '*rev2*'
+```
+
+The fixture contract `fixtures/expected.yaml` step 3 is checked by `tests/test_revisions.py`: Aster + Cirrus becomes CONFLICT (status changed), Aster + Boreal stays CONFLICT with changed evidence, and the other Aster pairs are unchanged.

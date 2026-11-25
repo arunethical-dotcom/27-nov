@@ -55,7 +55,7 @@ Visit http://localhost:8000. Both entry points open advisor.db relative to the w
 | Date values | YYYY-MM-DD, DD/MM/YYYY, DD.MM.YYYY or a full English month, e.g. 11 March 2026 |
 | CAS numbers | Optional. Each candidate must pass the weighted CAS check-digit calculation |
 
-Labels are case-insensitive and colon-delimited. An unambiguous date is normalized to ISO. For example, 23/03/2026 becomes 2026-03-23. The extractor retains 03/11/2026 as raw text and flags it for review because it admits two interpretations. An unparseable date also requires review. A CAS checksum verifies the digits only.
+Labels are case-insensitive and accept a colon or horizontal whitespace before the value. An unambiguous date is normalized to ISO. For example, 23/03/2026 becomes 2026-03-23. The extractor retains 03/11/2026 as raw text and flags it for review because it admits two interpretations. All slash dates with both components at most 12 retain their raw text and require review, including 03/03/2026. An unparseable date also requires review. A CAS checksum verifies the digits only.
 
 Each extracted occurrence carries value, raw, ambiguous, chunk_id, start and end. Use raw when comparing a normalized value with a PDF passage. Call extract_metadata on persisted section chunks to get database chunk IDs. The loader stores the product and version fields and the underlying chunks; the extraction result is not a separate metadata table.
 

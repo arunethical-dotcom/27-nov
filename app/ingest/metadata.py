@@ -1,4 +1,4 @@
-"""Product identifiers and their page-local source spans."""
+"""Product identifiers and their document-level source spans."""
 from dataclasses import dataclass
 from datetime import datetime
 import re
@@ -15,9 +15,9 @@ class SourceValue:
 
 
 FIELDS = {
-    "product_name": r"^(?:Product name|Product identifier|Trade name)[ \t]*:[ \t]*(\S[^\n]*?)\s*$",
-    "product_code": r"^Product code:[ \t]*(\S[^\n]*?)\s*$",
-    "revision_date": r"^(?:Revision date|Date of revision|Revised)[ \t]*:[ \t]*([^\n\r]+?)[ \t]*$",
+    "product_name": r"^(?:Product name|Product identifier|Trade name)(?:[ \t]*:[ \t]*|[ \t]+)(\S[^\n]*?)\s*$",
+    "product_code": r"^Product code(?:[ \t]*:[ \t]*|[ \t]+)(\S[^\n]*?)\s*$",
+    "revision_date": r"^(?:Revision date|Date of revision|Revised)(?:[ \t]*:[ \t]*|[ \t]+)([^\n\r]+?)[ \t]*$",
     "cas_numbers": r"(?<![\d-])(\d{2,7}-\d{2}-\d)(?![\d-])",
 }
 
@@ -29,7 +29,8 @@ def revision_value(raw):
             parsed = datetime.strptime(raw, pattern).date()
         except ValueError:
             continue
-        if pattern in {"%d/%m/%Y", "%d.%m.%Y"} and parsed.day <= 12 and parsed.day != parsed.month:
+        if parsed.day <= 12 and (pattern == "%d/%m/%Y" or
+                                 (pattern == "%d.%m.%Y" and parsed.day != parsed.month)):
             return raw, True
         return parsed.isoformat(), False
     return raw, True

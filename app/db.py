@@ -96,6 +96,9 @@ class PairResult(SQLModel, table=True):
     rule_id: str
     evidence_json: list = Field(sa_column=Column(JSON, nullable=False))
     to_verify_json: list = Field(sa_column=Column(JSON, nullable=False))
+    change_flag: str = "NONE"
+    previous_verdict: str | None = None
+    change_report_id: int | None = None
     created_at: datetime = Field(default_factory=now)
 
 
@@ -118,6 +121,8 @@ def initialize_database(engine):
         SQLModel.metadata.create_all(conn)
         for table, fields in {"sds_version": {"document_text": "TEXT", "reviewed_storage": "JSON", "reviewer": "TEXT"},
                               "session_product": {"version_id": "INTEGER REFERENCES sds_version(id)"},
+                              "pair_result": {"change_flag": "TEXT NOT NULL DEFAULT 'NONE'",
+                                              "previous_verdict": "TEXT", "change_report_id": "INTEGER"},
                               "fact": {"start": "INTEGER", "end": "INTEGER", "quote": "TEXT"},
                               "chunk": {"page_start": "INTEGER", "page_end": "INTEGER"}}.items():
             existing = {row[1] for row in conn.exec_driver_sql(f"PRAGMA table_info({table})")}

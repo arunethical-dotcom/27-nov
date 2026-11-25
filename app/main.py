@@ -4,7 +4,8 @@ from urllib.parse import parse_qs
 
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from app.session_ui import routes
+from app.session_ui import LABELS, routes
+from app.revision_ui import routes as revision_routes
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import event, text
@@ -88,6 +89,7 @@ def create_app(database_url="sqlite:///advisor.db"):
 
     app.mount("/static", StaticFiles(directory=Path(__file__).parent / "ui/static"), name="static")
     app.include_router(routes(engine,templates))
+    app.include_router(revision_routes(engine,templates,LABELS))
     return app
 
 

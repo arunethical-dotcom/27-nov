@@ -1,0 +1,13 @@
+{% macro render(segments, side) %}{% for op, text in segments %}{% if op == 'equal' %}{{ text }}{% elif op == 'delete' and side == 'old' %}<del>{{ text }}</del>{% elif op == 'insert' and side == 'new' %}<ins>{{ text }}</ins>{% endif %}{% endfor %}{% endmacro %}
+{% macro fields(f) %}
+{% for c in f.changed %}<h3>Section {{c.section}} · {{c.name}}</h3><div class="columns"><div><div class="eyebrow">Current sheet</div><div class="diff">{{ render(c.segments,'old') or '—' }}</div></div><div><div class="eyebrow">New sheet</div><div class="diff">{{ render(c.segments,'new') or '—' }}</div></div></div>{% else %}<p>No changes in Sections 2, 7, 8, 10.5 or 14.</p>{% endfor %}
+{% if f.unchanged %}<p class="hint">Unchanged: {% for s in f.unchanged %}Section {{s}}{{ ', ' if not loop.last }}{% endfor %}.</p>{% endif %}
+{% endmacro %}
+{% macro pairs(affected, product, labels, flags) %}
+{% if affected %}<div class="scroll"><table class="grid"><thead><tr><th>Session</th><th>Pair</th><th>Before</th><th>After</th><th>Change</th></tr></thead><tbody>
+{% for a in affected %}<tr><td>{{a.session}}</td><td>{{product.name}} + {{a.peer.name}}</td><td>{% if a.before %}<span class="badge {{a.before.verdict}}">{{labels[a.before.verdict]}}</span> {{a.before.rule}}{% else %}—{% endif %}</td><td><span class="badge {{a.after.verdict}}">{{labels[a.after.verdict]}}</span> {{a.after.rule}}</td><td><span class="flag {{a.flag}}">{{flags[a.flag]}}</span></td></tr>
+{% if a.flag != 'NONE' %}<tr><td></td><td colspan="4">{% for q in a.quotes if q.changed %}<div class="eyebrow">{{q.code}} · Section {{q.section}}</div><div class="columns"><div class="diff">{{ render(q.segments,'old') or '(not cited before)' }}</div><div class="diff">{{ render(q.segments,'new') or '(no longer cited)' }}</div></div>{% endfor %}
+{% for q in a.quotes if not q.changed %}<div class="eyebrow">{{q.code}} · Section {{q.section}} · unchanged</div><div class="diff">{{q.new}}</div>{% endfor %}
+{% if a.flag == 'EVIDENCE_CHANGED' and a.after.verdict == 'UNRESOLVED' %}<p class="hint">What is missing changed. Before: {% for g in a.gaps_before %}{{g[0]}} §{{g[1]}}{{ ', ' if not loop.last }}{% else %}nothing{% endfor %}. Now: {% for g in a.gaps_after %}{{g[0]}} §{{g[1]}}{{ ', ' if not loop.last }}{% else %}nothing{% endfor %}.</p>{% endif %}</td></tr>{% endif %}
+{% endfor %}</tbody></table></div>{% else %}<p>No saved pairs include this product yet.</p>{% endif %}
+{% endmacro %}

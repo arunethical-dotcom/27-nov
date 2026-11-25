@@ -1,0 +1,8 @@
+{% extends 'base.html' %}{% block title %}Upload SDS{% endblock %}{% block content %}
+<h1>Upload an SDS</h1>
+{% if message %}<p class="error" role="alert">{{ message }}</p>{% endif %}
+<section><h2>Add a new sheet or a new version</h2>
+<p class="hint">A sheet for a product already in the system is never applied straight away: you will see what changed and which saved pairs are affected, then decide.</p>
+<form method="post" action="/upload" enctype="multipart/form-data"><label>SDS file (PDF)<input type="file" name="file" accept="application/pdf,.pdf" required></label><label>Your name<input name="user" maxlength="120"></label><button>Upload</button></form></section>
+{% if pending %}<section class="pending"><h2>SDS updates waiting for review</h2>{% for p in pending %}<p><a href="/versions/{{p.id}}/preview">{{p.name}} · {{p.label}}</a></p>{% endfor %}</section>{% endif %}
+{% endblock %}

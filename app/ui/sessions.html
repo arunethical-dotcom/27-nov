@@ -1,4 +1,5 @@
 {% extends 'base.html' %}{% block content %}<h1>Storage sessions</h1>
 <div class="columns"><section><h2>Create a session</h2><form method="post" action="/sessions"><label>Session name<input required maxlength="120" name="name"></label><button>Create session</button></form></section>
 <section><h2>Fixture demo</h2><p>Open the pair matrix for the six fictional fixture products.</p><form method="post" action="/sessions"><input type="hidden" name="name" value="Fixture storage review"><input type="hidden" name="demo" value="fixtures"><button>Open fixture demo</button></form></section></div>
+{% if pending %}<section class="pending"><h2>SDS updates waiting for review</h2>{% for p in pending %}<p><a href="/versions/{{p.id}}/preview">{{p.name}} · {{p.label}}</a></p>{% endfor %}</section>{% endif %}
 {% if sessions %}<section><h2>Saved sessions</h2>{% for s in sessions %}<p><a href="/sessions/{{ s.id }}">{{ s.name }}</a></p>{% endfor %}</section>{% endif %}{% endblock %}

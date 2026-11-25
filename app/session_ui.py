@@ -8,6 +8,7 @@ from starlette.exceptions import HTTPException
 from app.db import Product, SDSVersion, Session as WorkSession
 from app.schemas import DISCLAIMER
 from app.sessions import add_product, read_session
+from app.revisions import pending_versions, version_labels
 
 LABELS = {"CONFLICT":"CONFLICT", "UNRESOLVED":"UNRESOLVED",
           "NO_CONFLICT_FOUND":"NO CONFLICT FOUND in these SDS sections"}
@@ -35,7 +36,7 @@ def routes(engine, templates):
     def list_sessions(request: Request):
         with Session(engine) as db:
             return render(request,"sessions.html", sessions=db.exec(
-                select(WorkSession).order_by(WorkSession.id.desc())).all())
+                select(WorkSession).order_by(WorkSession.id.desc())).all(), pending=pending_versions(db))
 
     @router.post("/sessions")
     async def create(request: Request):
@@ -64,7 +65,7 @@ def routes(engine, templates):
         choices = [p for p in db.exec(select(Product).join(SDSVersion).where(
             SDSVersion.status=="active").order_by(Product.name)) if p.code not in codes]
         return render(request,"matrix_panel.html" if partial else "matrix.html",
-                      work=work,report=report,links=links,choices=choices)
+                      work=work,report=report,links=links,choices=choices,pending=pending_versions(db))
 
     @router.post("/sessions/{sid}/products")
     async def add(request: Request,sid:int):
@@ -94,7 +95,7 @@ def routes(engine, templates):
             work,_,links = read_session(db,sid)
             for result_id,pair in links.values():
                 if result_id == rid:
-                    return render(request,"pair.html",work=work,pair=pair)
+                    return render(request,"pair.html",work=work,pair=pair,vlabels=version_labels(db))
             raise HTTPException(404,"Pair not found in session")
 
     @router.get("/sessions/{sid}/chemicals/{code}")
@@ -104,7 +105,7 @@ def routes(engine, templates):
             work,report,_ = read_session(db,sid)
             for card in report.chemicals:
                 if card.product.code == code:
-                    return render(request,"chemical.html",work=work,card=card)
+                    return render(request,"chemical.html",work=work,card=card,vlabels=version_labels(db))
             raise HTTPException(404,"Product not found in session")
 
     @router.get("/sessions/{sid}/download")
